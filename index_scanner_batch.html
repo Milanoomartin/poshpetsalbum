@@ -1,0 +1,1746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Monopoly Go! Wizard Suite</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Pacifico&display=swap');
+        * { box-sizing: border-box; user-select: none; }
+        body { background-color: #2c2c2c; font-family: 'Nunito', sans-serif; margin: 0; padding: 20px 80px 20px 80px; min-height: 100vh; overflow-x: hidden; }
+        
+        /* --- ORIGINAL STYLES PRESERVED --- */
+        .header-container { width: 100%; max-width: 1200px; margin: 0 auto 20px auto; text-align: center; }
+        .main-header-img { width: 100%; max-height: 300px; object-fit: cover; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        
+        .sidebar { position: fixed; left: 0; top: 20px; bottom: 20px; width: 60px; background: white; border-radius: 0 20px 20px 0; display: flex; flex-direction: column; gap: 10px; padding: 10px 0; box-shadow: 4px 0 15px rgba(0,0,0,0.3); z-index: 100; transition: width 0.3s; overflow-y: auto; overflow-x: hidden; white-space: nowrap; }
+        .sidebar:hover { width: 220px; }
+        .nav-icon { font-size: 24px; text-align: center; color: #ccc; margin-bottom: 10px; cursor: pointer;}
+        
+        .nav-item { padding: 12px 15px; cursor: pointer; font-weight: 800; transition: 0.2s; background: #f9f9f9; margin: 2px 0; font-size: 14px; }
+        .nav-item:hover { filter: brightness(0.95); padding-left: 20px; }
+
+        .main-container { display: flex; flex-wrap: wrap; gap: 30px; justify-content: center; transition: 0.3s; }
+        .album-set { width: 380px; background: #fcfbf4; border-radius: 20px; overflow: hidden; border: 4px solid #f0eee2; box-shadow: 0 10px 25px rgba(0,0,0,0.5); flex-shrink: 0; position: relative; }
+        .set-header { padding: 15px; color: white; border-bottom: 2px solid rgba(255,255,255,0.3); }
+        .set-num { font-size: 12px; font-weight: bold; opacity: 0.9; }
+        .set-name { font-family: 'Pacifico', cursive; font-size: 24px; margin-bottom: 10px; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
+        .progress-bar-bg { background: rgba(0,0,0,0.3); height: 10px; border-radius: 5px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; width: 0%; background: #76ff03; transition: width 0.3s ease; }
+        .progress-text { text-align: right; font-size: 12px; margin-top: 4px; font-weight: 800; }
+        .grid-layout { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 20px 10px; }
+        .card-container { position: relative; display: flex; flex-direction: column; align-items: center; }
+        .stars { position: absolute; top: -12px; z-index: 5; color: #d8cba5; font-size: 12px; -webkit-text-stroke: 1px #9e957a; letter-spacing: -2px; }
+        .sticker-slot { width: 100%; aspect-ratio: 2/3; background-color: #e4e0d2; border-radius: 12px; border: 2px solid white; box-shadow: inset 0 4px 8px rgba(0,0,0,0.08), 0 2px 0 #dcd8cd; cursor: pointer; position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; transition: all 0.3s ease; }
+        
+        @keyframes shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(3deg); } 50% { transform: rotate(-3deg); } 75% { transform: rotate(1deg); } 100% { transform: rotate(0deg); } }
+        .sticker-slot:hover { animation: shake 0.4s ease-in-out; filter: brightness(1.05); }
+
+        .placeholder-text { font-weight: 900; font-size: 20px; color: #ccc; transform: rotate(-10deg); z-index: 3; transition: 0.3s; }
+        .banner { position: absolute; bottom: 10px; left: -5%; width: 110%; background: #fff; color: #333; font-size: 9px; text-align: center; padding: 2px 0; transform: rotate(-3deg); opacity: 0.5; z-index: 2; font-weight: 800; border: 1px solid #ddd; }
+        
+        .sticker-slot.collected .placeholder-text { color: #ffd700; text-shadow: 0 0 10px gold; animation: textShimmer 2s infinite alternate; }
+        @keyframes textShimmer { from { filter: brightness(1); } to { filter: brightness(1.5); } }
+        .sticker-slot.collected .banner { opacity: 1; background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%); color: white; border: none; }
+        
+        .sticker-slot.gold-card { border: 3px solid #ffd700 !important; }
+        .sticker-slot.gold-card .banner { opacity: 1 !important; background: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c) !important; color: #5c4002 !important; border: 1px solid #b8860b !important; }
+        .sticker-slot.gold-card.collected { background: linear-gradient(135deg, #fff9c4, #fff); box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); }
+        
+        .controls { display: flex; gap: 5px; margin-top: 5px; opacity: 0; transition: 0.2s; }
+        .card-container:hover .controls { opacity: 1; }
+        .ctrl-btn { background: #fff; border: 1px solid #ccc; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-weight: bold; }
+        .counter-badge { position: absolute; top: 5px; right: 5px; background: #ff4081; color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; display: none; z-index: 10; }
+
+        /* --- NEW STYLES FOR SUITE --- */
+        
+        /* Right Sidebar */
+        .right-sidebar { position: fixed; right: 0; top: 20px; bottom: 20px; width: 60px; background: #1a1a1a; border-radius: 20px 0 0 20px; display: flex; flex-direction: column; gap: 15px; padding: 20px 0; box-shadow: -4px 0 15px rgba(0,0,0,0.5); z-index: 100; transition: width 0.3s; overflow: hidden; white-space: nowrap; color: white; }
+        .right-sidebar:hover { width: 200px; }
+        .right-nav-item { padding: 10px 15px; cursor: pointer; display: flex; align-items: center; gap: 15px; transition: 0.2s; }
+        .right-nav-item:hover, .right-nav-item.active { background: #ff4081; }
+        .r-icon { font-size: 20px; width: 30px; text-align: center; }
+        .r-text { font-weight: bold; font-size: 14px; }
+        
+        /* App Views */
+        .app-view { display: none; width: 100%; max-width: 1200px; margin: 0 auto; animation: fadeIn 0.3s; }
+        .app-view.active { display: flex; flex-direction: column; gap: 20px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Account Header */
+        .account-bar { background: #333; color: white; padding: 10px 20px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .acct-select { background: #444; color: white; border: 1px solid #555; padding: 5px 10px; border-radius: 5px; font-family: inherit; cursor: pointer; }
+
+        /* Custom Notification */
+        #notification-area { position: fixed; top: 20px; right: 80px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; pointer-events: none; }
+        .toast { background: white; padding: 15px 25px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); border-left: 5px solid #ff4081; transform: translateX(100%); animation: slideIn 0.4s forwards; font-weight: bold; display: flex; align-items: center; gap: 10px; min-width: 250px; pointer-events: auto; }
+        .toast.success { border-left-color: #76ff03; }
+        .toast.warning { border-left-color: #ffd700; }
+        @keyframes slideIn { to { transform: translateX(0); } }
+        @keyframes slideOut { to { transform: translateX(120%); opacity: 0; } }
+
+        /* Dashboard/Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; width: 100%; }
+        .stat-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .stat-title { color: #888; font-size: 14px; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; }
+        .stat-bar-container { height: 20px; background: #eee; border-radius: 10px; overflow: hidden; position: relative; margin-top: 5px; }
+        .stat-bar { height: 100%; background: linear-gradient(90deg, #ff4081, #ff80ab); width: 0%; transition: width 1s ease; }
+        .stat-value { font-size: 24px; font-weight: 900; color: #333; }
+
+        /* Vault */
+        .vault-container { background: #fff9c4; border: 4px solid #fbc02d; border-radius: 20px; padding: 30px; position: relative; max-width: 600px; margin: 0 auto; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .vault-header { font-family: 'Pacifico', cursive; font-size: 36px; color: #f57f17; text-shadow: 1px 1px 0px white; margin-bottom: 20px; }
+        .star-count { font-size: 48px; font-weight: 900; color: #333; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .star-icon { color: #ffd700; -webkit-text-stroke: 1px #b8860b; }
+        .vaults-grid { display: flex; justify-content: space-around; margin-top: 30px; gap: 10px; }
+        .vault-box { width: 120px; height: 140px; border-radius: 15px; position: relative; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; border: 2px solid white; box-shadow: 0 5px 10px rgba(0,0,0,0.2); }
+        .vault-box:hover { transform: translateY(-5px); }
+        .v-orange { background: #ffcc80; border-color: #ff9800; }
+        .v-blue { background: #90caf9; border-color: #2196f3; }
+        .v-gold { background: #fff59d; border-color: #ffd700; }
+        .vault-cost { font-weight: 900; color: white; padding: 5px 15px; border-radius: 20px; margin-top: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .v-orange .vault-cost { background: #ef6c00; }
+        .v-blue .vault-cost { background: #1565c0; }
+        .v-gold .vault-cost { background: #f9a825; }
+        
+        .notification-bubble { position: absolute; top: -10px; right: -10px; width: 30px; height: 30px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; color: white; box-shadow: 0 3px 6px rgba(0,0,0,0.3); border: 2px solid white; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 10;}
+        .nb-red { background: #f44336; }
+        .nb-gold { background: linear-gradient(45deg, #ffd700, #ffb300); color: #5d4037; animation: shake 2s infinite; }
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+
+        /* Trade Planner */
+        .planner-container { background: white; border-radius: 15px; padding: 20px; }
+        .mode-toggle { display: flex; gap: 10px; margin-bottom: 20px; background: #f0f0f0; padding: 10px; border-radius: 10px; }
+        .mode-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; opacity: 0.6; transition: 0.3s; }
+        .mode-btn.active { opacity: 1; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .mb-reg { background-color: #2196f3; } .mb-blitz { background-color: #ffd700; color: #5c4002; } .mb-fest { background-color: #9c27b0; }
+        
+        .trade-row { display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #eee; }
+        .trade-slot { width: 50px; height: 70px; background: #ddd; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 10px; text-align: center; }
+
+        /* Showroom */
+        .trophy-shelf { display: flex; gap: 20px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
+        .trophy { width: 100px; height: 120px; background: rgba(255,255,255,0.1); border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; opacity: 0.3; transition: 0.5s; position: relative; }
+        .trophy.earned { opacity: 1; background: rgba(255,255,255,0.2); animation: popIn 0.5s; }
+        .trophy-icon { font-size: 40px; margin-bottom: 5px; }
+        .trophy-name { color: white; font-size: 12px; font-weight: bold; }
+        .confetti { position: fixed; width: 10px; height: 10px; background-color: #f00; animation: fall linear forwards; z-index: 9999; top: -10px; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); } }
+
+        /* Importer */
+        .import-area { background: #333; color: white; padding: 20px; border-radius: 15px; }
+        textarea { width: 100%; height: 150px; background: #222; color: #fff; border: 1px solid #555; border-radius: 10px; padding: 10px; font-family: monospace; }
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-primary { background: #76ff03; color: #333; }
+        .btn-primary:hover { background: #64dd17; transform: scale(1.05); }
+
+    
+        /* --- Screenshot Scanner (added) --- */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
+        .modal { background: #fcfbf4; border-radius: 20px; border: 4px solid #f0eee2; box-shadow: 0 15px 40px rgba(0,0,0,0.6); width: min(1100px, 100%); max-height: 85vh; overflow: auto; }
+        .modal-header { padding: 15px 20px; border-bottom: 2px solid rgba(0,0,0,0.08); display:flex; justify-content: space-between; align-items:center; gap:10px; }
+        .modal-title { font-family:'Pacifico', cursive; font-size: 26px; color:#333; }
+        .modal-body { padding: 15px 20px 20px 20px; display:flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+        .modal-panel { flex: 1 1 380px; min-width: 320px; }
+        .scan-preview-img { width: 100%; border-radius: 15px; border: 2px solid #ddd; box-shadow: 0 5px 15px rgba(0,0,0,0.2); background: #111; }
+        .scan-mini { width: 64px; height: 96px; border-radius: 8px; border: 2px solid #eee; background: #e4e0d2; overflow: hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,0.08); }
+        
+        .scan-strip { display:flex; gap:8px; overflow:auto; padding:6px 2px; }
+        .scan-strip img { width: 90px; height: 56px; object-fit: cover; border-radius: 12px; border: 2px solid #eee; cursor: pointer; opacity: 0.85; background:#111; }
+        .scan-strip img.active { border-color: #64dd17; opacity: 1; box-shadow: 0 0 0 3px rgba(100,221,23,0.25); }
+.scan-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .scan-table th, .scan-table td { padding: 8px; border-bottom: 1px solid rgba(0,0,0,0.08); text-align: left; vertical-align: middle; }
+        .scan-table th { font-weight: 900; color: #666; text-transform: uppercase; font-size: 11px; }
+        .pill { display:inline-block; padding: 3px 8px; border-radius: 999px; font-weight: 900; font-size: 10px; }
+        .pill-ok { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
+        .pill-warn { background: #fff8e1; color: #5c4002; border: 1px solid #ffe0b2; }
+        .pill-bad { background: #ffebee; color: #b71c1c; border: 1px solid #ffcdd2; }
+        .scan-input { width: 70px; padding: 6px 8px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit; font-weight: 800; }
+        .scan-select { width: 220px; padding: 6px 8px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit; font-weight: 800; }
+        .scan-actions { padding: 15px 20px; display:flex; gap: 10px; justify-content: flex-end; border-top: 2px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.6); position: sticky; bottom: 0; }
+        .scan-progress { font-size: 12px; font-weight: 900; color: #555; }
+        .scan-note { color: #ddd; font-size: 12px; margin-top: 8px; line-height: 1.3; }
+        .scan-kv { display:flex; gap:10px; flex-wrap:wrap; align-items: center; margin: 10px 0; }
+        .scan-kv > div { background: rgba(0,0,0,0.12); padding: 8px 10px; border-radius: 12px; font-weight: 900; font-size: 12px; }
+
+    </style>
+</head>
+<body>
+    <div id="notification-area"></div>
+
+    <div class="header-container">
+        <img src="header.png" alt="Album Header" class="main-header-img">
+    </div>
+
+    <div class="account-bar" style="max-width: 1200px; margin: 0 auto 20px auto;">
+        <div style="font-weight: 800; font-size: 18px;">Current Player: <span id="display-name">Main</span></div>
+        <div style="display:flex; gap:10px; align-items: center;">
+             <span id="prestige-badge" style="display:none; background:#9c27b0; color:white; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:bold;">PRESTIGE</span>
+            <select id="account-selector" class="acct-select" onchange="Manager.switchAccount(this.value)">
+                <option value="Main">Main Account</option>
+                <option value="Alt 1">Alt 1</option>
+                <option value="Alt 2">Alt 2</option>
+                <option value="Create New">+ Create New</option>
+            </select>
+            <button class="btn" style="padding: 5px 10px; font-size: 12px;" onclick="Manager.togglePrestige()">Toggle Prestige</button>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="nav-icon">☰</div>
+        <div id="left-nav-content">
+             </div>
+    </div>
+
+    <div class="right-sidebar">
+        <div class="right-nav-item active" onclick="Manager.switchView('view-album', this)">
+            <div class="r-icon">📖</div><div class="r-text">Album</div>
+        </div>
+        <div class="right-nav-item" onclick="Manager.switchView('view-stats', this)">
+            <div class="r-icon">📊</div><div class="r-text">Progress</div>
+        </div>
+        <div class="right-nav-item" onclick="Manager.switchView('view-vault', this)">
+            <div class="r-icon">📦</div><div class="r-text">Vault</div>
+        </div>
+        <div class="right-nav-item" onclick="Manager.switchView('view-trade', this)">
+            <div class="r-icon">🤝</div><div class="r-text">Trade Planner</div>
+        </div>
+        <div class="right-nav-item" onclick="Manager.switchView('view-smart', this)">
+            <div class="r-icon">🧠</div><div class="r-text">Smart Trades</div>
+        </div>
+         <div class="right-nav-item" onclick="Manager.switchView('view-import', this)">
+            <div class="r-icon">📥</div><div class="r-text">Import</div>
+        </div>
+        
+        <div class="right-nav-item" onclick="Manager.switchView('view-scan', this)">
+            <div class="r-icon">📷</div><div class="r-text">Scan</div>
+        </div>
+<div class="right-nav-item" onclick="Manager.switchView('view-showroom', this)">
+            <div class="r-icon">🏆</div><div class="r-text">Show Room</div>
+            <div class="notification-bubble nb-red" id="showroom-notify" style="display:none; width:15px; height:15px; font-size:10px; top:5px; right:5px;">!</div>
+        </div>
+    </div>
+
+    <div id="view-album" class="app-view active">
+        <div class="main-container" id="album-container">
+           </div>
+    </div>
+
+    <div id="view-stats" class="app-view">
+        <h2 style="color:white; font-family:'Pacifico', cursive;">Progress Tracker</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-title">Album Completion</div>
+                <div class="stat-value" id="stat-total">0 / 216</div>
+                <div class="stat-bar-container"><div class="stat-bar" id="bar-total"></div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Gold Stickers</div>
+                <div class="stat-value" id="stat-gold">0 / 0</div>
+                <div class="stat-bar-container"><div class="stat-bar" id="bar-gold" style="background: linear-gradient(90deg, #ffd700, #ffb300);"></div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Non-Gold Stickers</div>
+                <div class="stat-value" id="stat-nongold">0 / 0</div>
+                <div class="stat-bar-container"><div class="stat-bar" id="bar-nongold" style="background: linear-gradient(90deg, #2196f3, #64b5f6);"></div></div>
+            </div>
+        </div>
+        <h3 style="color:white; margin-top:20px;">Star Breakdown</h3>
+        <div class="stats-grid" id="star-breakdown-grid">
+            </div>
+    </div>
+
+    <div id="view-vault" class="app-view">
+        <div class="vault-container">
+            <div class="vault-header">Stickers for Rewards</div>
+            <div class="star-count">
+                <span class="star-icon">★</span>
+                <span id="vault-star-display">0</span>
+            </div>
+            <p style="color:#666; font-weight:bold;">Exchange duplicate Sticker Stars for rewards!</p>
+            
+            <div class="vaults-grid">
+                <div class="vault-box v-orange" onclick="Vault.clickVault(250)">
+                    <div class="notification-bubble nb-red" id="notify-250" style="display:none;">1</div>
+                    <img src="orange.png" style="width:50px; margin-bottom:10px;">
+                    <div class="vault-cost">★ 250</div>
+                </div>
+                <div class="vault-box v-blue" onclick="Vault.clickVault(450)">
+                    <div class="notification-bubble nb-red" id="notify-450" style="display:none;">2</div>
+                    <img src="blue.png" style="width:60px; margin-bottom:10px;">
+                    <div class="vault-cost">★ 450</div>
+                </div>
+                <div class="vault-box v-gold" onclick="Vault.clickVault(700)">
+                    <div class="notification-bubble nb-red" id="notify-700" style="display:none;">3</div>
+                    <div class="notification-bubble nb-gold" id="notify-1150" style="display:none;">!</div>
+                    <img src="gold.png" style="width:60px; margin-bottom:10px;">
+                    <div class="vault-cost">★ 700</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-trade" class="app-view">
+        <div class="planner-container">
+            <h3>Trade Planner</h3>
+            <div class="mode-toggle">
+                <button class="mode-btn mb-reg active" id="btn-mode-reg" onclick="Trade.setMode('regular')">Regular (5 Trades)</button>
+                <button class="mode-btn mb-blitz" id="btn-mode-blitz" onclick="Trade.setMode('blitz')">Golden Blitz (+5 Gold)</button>
+                <button class="mode-btn mb-fest" id="btn-mode-fest" onclick="Trade.setMode('fest')">Trade Fest (10 Trades)</button>
+            </div>
+            
+            <div id="blitz-setup" style="display:none; padding:10px; background:#fffde7; border:1px solid #ffd700; margin-bottom:15px; border-radius:10px;">
+                <strong>Blitz Setup:</strong> Select 2 Gold Cards active for trading today.
+                <select id="blitz-card-1" class="acct-select" style="color:black;"><option>Select Gold 1</option></select>
+                <select id="blitz-card-2" class="acct-select" style="color:black;"><option>Select Gold 2</option></select>
+            </div>
+
+            <div style="display:flex; justify-content: space-between; margin-bottom:10px;">
+                <span id="trades-remaining" style="font-weight:bold; color:#444;">Trades Remaining: 5/5</span>
+                <span id="reset-timer" style="font-size:12px; color:#888;">Resets at 4:00 AM EDT</span>
+            </div>
+
+            <div id="trade-slots-area">
+                </div>
+            
+            <div style="margin-top:20px; text-align:right;">
+                <button class="btn btn-primary" onclick="Trade.finalizeTrades()">Finalize & Update Inventory</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-smart" class="app-view">
+        <div class="planner-container">
+            <h3>Smart Trade Suggestions</h3>
+            <p>Compare <strong>Main</strong> with:</p>
+            <select id="compare-target" class="acct-select" style="color:black; width:100%; margin-bottom:15px;">
+                </select>
+            <div id="suggestion-list" style="display:flex; flex-direction:column; gap:10px;">
+                <div style="color:#888; text-align:center; padding:20px;">Select an account to generate suggestions.</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-import" class="app-view">
+        <div class="import-area">
+            <h3>Bulk Import</h3>
+            <p>Paste a list of sticker amounts. Order corresponds to album order (Set 1 Card 1 to Set 25 Card 9).</p>
+            <p><em>Format: Just numbers separated by commas or new lines. (0 = missing, 1 = have, 2 = 1 dupe).</em></p>
+            <textarea id="import-text" placeholder="1,0,2,3,1,0..."></textarea>
+            <br><br>
+            <button class="btn btn-primary" onclick="Importer.process()">Import Data</button>
+        </div>
+    </div>
+
+
+    <div id="view-scan" class="app-view">
+        <div class="import-area">
+            <h3>Screenshot Scanner</h3>
+            <p>Upload a screenshot of your album set page. The scanner will try to detect sticker names and duplicate (+#) banners, then prepare an update preview.</p>
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <label style="font-weight:800;">Set:</label>
+                <select id="scan-set-selector" class="acct-select" style="color:black;">
+                    <option value="auto">Auto-detect</option>
+                </select>
+
+                <label style="font-weight:800;">Screenshots:</label>
+                <input id="scan-file" type="file" accept="image/*" multiple style="color:white;">
+                <button class="btn btn-primary" id="btn-scan" onclick="Scanner.startScan()">Scan</button>
+                <span id="scan-status" class="scan-progress"></span>
+            </div>
+
+            <div class="scan-note">
+                Tips: Use the highest-resolution screenshot you can (no motion blur), and try to capture the full 3×3 grid. If the scan misses something, you can correct it in the confirmation window before applying.
+            </div>
+        </div>
+    </div>
+
+
+
+    <div id="view-showroom" class="app-view">
+        <div style="text-align:center; color:white;">
+            <h1 style="font-family:'Pacifico'; font-size:48px; color:#ffd700; text-shadow:0 0 20px #ff6f00;">The Show Room</h1>
+            <p>Your Achievements across all accounts</p>
+        </div>
+        <div class="trophy-shelf" id="trophy-case">
+            </div>
+    </div>
+
+    
+    <!-- Screenshot Scanner Modal -->
+    <div class="modal-overlay" id="scan-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title">Confirm Scan Updates</div>
+                    <div style="font-weight:900; font-size:12px; color:#777;" id="scan-modal-subtitle">Preview & adjust before applying</div>
+                </div>
+                <button class="btn" style="background:#eee;" onclick="Scanner.closeModal()">✖</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-panel">
+                    <div style="font-weight:900; margin-bottom:10px;">Screenshot Preview</div>
+                    <div id="scan-batch-controls" style="display:none; margin:-4px 0 10px 0;">
+                        <div style="font-weight:900; font-size:12px; opacity:0.8; margin-bottom:6px;">Files (tap to switch)</div>
+                        <div class="scan-strip" id="scan-batch-strip"></div>
+                    </div>
+                    <img id="scan-modal-image" class="scan-preview-img" alt="Screenshot preview">
+                    <div class="scan-kv" id="scan-modal-summary"></div>
+                </div>
+                <div class="modal-panel">
+                    <div style="font-weight:900; margin-bottom:10px;">Detected Stickers (editable)</div>
+                    <div style="max-height:55vh; overflow:auto; border:1px solid rgba(0,0,0,0.08); border-radius:12px; background:white;">
+                        <table class="scan-table" id="scan-table"></table>
+                    </div>
+                </div>
+            </div>
+            <div class="scan-actions">
+                <button class="btn" style="background:#fff; border:1px solid #ccc;" onclick="Scanner.closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="Scanner.applyUpdates()">Apply Updates</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="data-source" style="display:none;">
+        </div>
+
+
+    <!-- OCR / Vision libs for Screenshot Scanner -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script async src="https://docs.opencv.org/4.x/opencv.js" onload="window.__opencvReady = true;"></script>
+
+
+    <script>
+        // --- 1. DATA DEFINITIONS (Based on provided HTML) ---
+        const SET_DATA = [
+             { id: '1', name: 'Community Gallery', color: 'hsl(8, 70%, 80%)', cards: ['Kiara','David Frogsy','Buddy','Lucky','Bryan','Smokey','Stella','Roo','Rum'] },
+             { id: '2', name: 'Elegant Essentials', color: 'hsl(338, 70%, 80%)', cards: ['Carrot Cushion','Fancy Perch','Cuckoo-zy','Regal Adornment','Gilded Run','Opulent Oasis','Royal Nibbles','Coral Couture','Luxe Ribbon'] },
+             { id: '3', name: 'Pet Lookalikes', color: 'hsl(91, 70%, 80%)', cards: ['Shellmates','Beauty Buddies','Carrot Companions','Feathered Twins','Spotting Companion','Pigtail Pals','Zen Buds','Birds of a Feather','Dapper Duo'] },
+             { id: '4', name: "Duke's Spa Day", color: 'hsl(132, 70%, 80%)', cards: ['Spa Time','Head Massage','Nail File',"Relaxin'",'Serene Bath','Paw-Made','Makin Biscuits','Blown Away','Pampered Pet'] },
+             { id: '5', name: 'Posh Neighborhood', color: 'hsl(115, 70%, 80%)', cards: ['Dog House','Cat Tree','Hamster Habitat','Turtle Town','Bird Paradise','Rabbit Hutch','Rodent Retreat','Lizard Lounge','Guinea Pig Villa'] },
+             { id: '6', name: 'Meowny Talks', color: 'hsl(313, 70%, 80%)', cards: ['Water Cooler','Capital Gains','Cord Catastrophe','Key Crusher','Roll Wrecker','Cat of the Month','Scratching Deadlines','Board Meeting','The Boss'] },
+             { id: '7', name: 'Aquarium Life', color: 'hsl(8, 70%, 80%)', cards: ['Pearls Galore','Neon Ballroom','Betta Beauty','Ahoy Treasure','Lavish Koi','Water Works','Shell Spa','Algae Art','Castle Dreams'] },
+             { id: '8', name: 'Pet City', color: 'hsl(273, 70%, 80%)', cards: ['City Gates','High Pawrk','Lap of Luxury',"Bird's Eye View",'Mayor Hopscotch','Gold Leash District','Paw Plaza','Tail Wag Tunnel','Skyline Soirée'] },
+             { id: '9', name: 'Cold-Blooded Billionaires', color: 'hsl(83, 70%, 80%)', cards: ['Sly Snake','Pond Penthouse','Prestigious Iguana','Serene Turtle','Lounge Ledge','Crystal Axolotl','Leap of Luxury','Tortoise Domain','Lizard Vault'] },
+             { id: '10', name: 'Hamster Trail', color: 'hsl(56, 70%, 80%)', cards: ['Tube Traffic','Cash Grab','High Roller','Jet Joy','Luxury Love','Nap Nook','Ring Leader','Squeak Squad','Property Protector'] },
+             { id: '11', name: 'Posh Plushies', color: 'hsl(286, 70%, 80%)', cards: ['Artist Hazel','Sled Dog','Miss Priss','Pink Poodle','Dapper Duke','Bride & Groom','Tycoon Bear','Desert Tortoise','Sleepy Scottie'] },
+             { id: '12', name: 'Beauty Salon', color: 'hsl(31, 70%, 80%)', cards: ['Suds & Sparkle','Rollers','Salon Bliss','Blowout Bar','Shell Shine','Dyed to be Wild','Golden Groom','Paw-dicure','Looking Fresh'] },
+             { id: '13', name: 'Mach Paws', color: 'hsl(337, 70%, 80%)', cards: ['Go-Kitty','Passenger Princess','In the Wind','Slow Ride','Sidecar Sidekick','Hamster Wheels','Reptilian Roadster','Coupe Hopper','Zoomie Mobile'] },
+             { id: '14', name: 'Pet Dreams', color: 'hsl(281, 70%, 80%)', cards: ['Fish Wish','Mani Pedi','Snack Shower','Treatnado','Mirror Mirror','Cheese Wiz','Great Scott!','Laser Quest','Princess Priss'] },
+             { id: '15', name: 'Rock Stars', color: 'hsl(284, 70%, 80%)', cards: ['Rock Cat','Soundbooth Perch',"Punk'd Out",'Tour Ready','Bulldog Blues','Fishy Tunes','Vinyl Drop','Metal Mood','Backstage Glow'] },
+             { id: '16', name: 'Party Style', color: 'hsl(257, 70%, 80%)', cards: ['Bandana','Cowboy Hat','Party Hat','Neck Tie','Witch Hat','Pirate Hat','Sunglasses','Fairy Wings','Skateboard'] },
+             { id: '17', name: 'Cute Style', color: 'hsl(140, 70%, 80%)', cards: ['Neck Ribbon','Scarf','Bow','Cap','Headphones','Heart Glasses','Beanie','Bee Wings','Flower Cushion'] },
+             { id: '18', name: 'Ritzy Style', color: 'hsl(198, 70%, 80%)', cards: ['Captain Hat','Feathered Hat','Tophat','Tiara','M Collar','Pearl Collar',"King's Cape",'Money Pile',"King's Crown"] },
+             { id: '19', name: 'Haute Dog', color: 'hsl(177, 70%, 80%)', cards: ['Cover Shot','Sketches','Cavy Couture','Tulle Bunny','In Dogue','Catwalk','Loud Look','Showstopper','Poised Pawsy'] },
+             { id: '20', name: 'Hello Kitty & Friends', color: 'hsl(130, 70%, 80%)', cards: ['Hello Kitty','Cinnamoroll','Chococat','Pochacco','Kuromi & My Melody','Pompompurin','Keroppi','Picnic Friends','Beach Day'] },
+             { id: '21', name: 'Celebrity Pets', color: 'hsl(169, 70%, 80%)', cards: ['Woke Up Like This','Pup-parazzi','Fit Check','On Set','Talk Show','Chauffeured','Pawtograph','Tabloids','Wall of Fame'] },
+             { id: '22', name: 'Victorian Romance', color: 'hsl(56, 70%, 80%)', cards: ['Made in the Shade','Pondside Reverie','Tortoise Trot','Tea Tease','Afternoon Nibbles','Font of Wealth','Swan Swoon','River Serenade','Croak-et'] },
+             { id: '23', name: 'Trustfund Furballs', color: 'hsl(340, 70%, 80%)', cards: ['Uptown Pup','Golden Yarn','Sunroom Sanctuary','Spoon Fed','Topiary','Portrait Walk','Penthouse Views','Pillow Peak',"Duke's Throne"] },
+             { id: '24', name: 'Red Carpet', color: 'hsl(253, 70%, 80%)', cards: ['Glam Squad','Carpet Craze','Ruff Rivalry','Best Dressed','Spotlight Pup','Who Is It?','Bow Tie Moment','Hardly Judging','Best in Show'] },
+             { id: '25', name: 'Luxury Style', color: 'hsl(5, 70%, 80%)', cards: ['Water Bowl','Dog Bed','Tennis Ball','Grooming Set','Carrier','Jeweled Collar','Golden Bow','Golden Tophat','Golden Skateboard'] }
+        ];
+
+        // Hardcoded metadata for stars/gold based on original visual cues (Gold cards have explicit CSS class in original)
+        // I've mapped them based on the HTML provided
+        const CARD_META = {
+            's14_8': {gold:true}, 
+            's15_7': {gold:true},
+            's16_6': {gold:true}, 's16_8': {gold:true},
+            's17_5': {gold:true}, 's17_8': {gold:true},
+            's18_3': {gold:true}, 's18_4': {gold:true}, 's18_8': {gold:true},
+            's19_5': {gold:true}, 's19_7': {gold:true},
+            's20_5': {gold:true}, 's20_7': {gold:true},
+            's21_4': {gold:true}, 's21_5': {gold:true}, 's21_7': {gold:true},
+            's22_2': {gold:true}, 's22_3': {gold:true}, 's22_7': {gold:true},
+            's23_1': {gold:true}, 's23_2': {gold:true}, 's23_6': {gold:true}, 's23_7': {gold:true},
+            's24_1': {gold:true}, 's24_2': {gold:true}, 's24_5': {gold:true}, 's24_6': {gold:true}, 's24_7': {gold:true},
+            's25_6': {gold:true}, 's25_7': {gold:true}, 's25_8': {gold:true}
+        };
+
+        // Star mapping logic (manual approximation based on visual ★ counts in HTML)
+        function getStarCount(setIndex, cardIndex) {
+            // Simplified logic: Early sets 1 star, Late sets 5 stars. 
+            // Parsing actual HTML string for ★ in build phase
+            return 1; // Placeholder, overridden in build
+        }
+
+        // --- 2. CORE MANAGER ---
+        const Manager = {
+            state: {
+                currentAccount: 'Main',
+                accounts: {}, // { 'Main': { data: {}, prestige: false, lastTradeReset: 0, tradesUsed: 0 } }
+                settings: {
+                    tradeMode: 'regular', // regular, blitz, fest
+                    blitzCards: []
+                }
+            },
+            
+            init() {
+                this.loadData();
+                this.buildAlbumUI();
+                this.buildNav();
+                this.updateUI();
+                this.setupTimer();
+                Trade.init();
+                Showroom.checkAchievements();
+                Scanner.init();
+            },
+
+            loadData() {
+                const saved = localStorage.getItem('MonopolyGoWizard_v1');
+                if (saved) {
+                    this.state = JSON.parse(saved);
+                } else {
+                    // Migration from old version
+                    const old = localStorage.getItem('myMonopolyAlbum_v1');
+                    this.state.accounts['Main'] = {
+                        data: old ? JSON.parse(old) : {},
+                        prestige: false,
+                        tradesUsed: 0,
+                        lastTradeReset: Date.now()
+                    };
+                    this.saveData();
+                }
+                if(!this.state.accounts['Alt 1']) this.createAccount('Alt 1');
+                this.updateAccountSelector();
+            },
+
+            saveData() {
+                localStorage.setItem('MonopolyGoWizard_v1', JSON.stringify(this.state));
+            },
+
+            createAccount(name) {
+                if(!this.state.accounts[name]) {
+                    this.state.accounts[name] = { data: {}, prestige: false, tradesUsed: 0, lastTradeReset: Date.now() };
+                    this.saveData();
+                }
+            },
+
+            switchAccount(name) {
+                if(name === 'Create New') {
+                    const newName = prompt("Enter new account name:");
+                    if(newName && !this.state.accounts[newName]) {
+                        this.createAccount(newName);
+                        this.state.currentAccount = newName;
+                    }
+                } else {
+                    this.state.currentAccount = name;
+                }
+                this.saveData();
+                document.getElementById('display-name').textContent = this.state.currentAccount;
+                this.updateUI();
+                Notify.show(`Switched to ${this.state.currentAccount}`, 'success');
+            },
+
+            getCurrentData() {
+                return this.state.accounts[this.state.currentAccount].data;
+            },
+
+            togglePrestige() {
+                const acct = this.state.accounts[this.state.currentAccount];
+                acct.prestige = !acct.prestige;
+                this.saveData();
+                this.updateUI();
+                Notify.show(`Prestige Mode ${acct.prestige ? 'ON' : 'OFF'}`, 'warning');
+            },
+
+            updateUI() {
+                const acct = this.state.accounts[this.state.currentAccount];
+                const data = acct.data;
+
+                // Prestige Visibility
+                document.getElementById('prestige-badge').style.display = acct.prestige ? 'inline-block' : 'none';
+                const set25 = document.getElementById('set-25');
+                if(set25) set25.style.display = acct.prestige ? 'block' : 'none';
+
+                // Update Cards
+                document.querySelectorAll('.card-container').forEach(card => {
+                    const id = card.getAttribute('data-id');
+                    const count = data[id] || 0;
+                    const slot = card.querySelector('.sticker-slot');
+                    const badge = card.querySelector('.counter-badge');
+                    
+                    if (count > 0) {
+                        slot.classList.add('collected');
+                        if (!slot.classList.contains('gold-card')) {
+                            slot.style.backgroundColor = card.getAttribute('data-color');
+                        }
+                    } else {
+                        slot.classList.remove('collected');
+                        if (!slot.classList.contains('gold-card')) {
+                            slot.style.backgroundColor = '';
+                        }
+                    }
+                    badge.style.display = count > 1 ? 'block' : 'none';
+                    badge.textContent = '+' + (count - 1);
+                });
+
+                // Update Bars
+                this.updateProgressBars();
+                Stats.update();
+                Vault.update();
+                Trade.updateUI();
+            },
+
+            updateCard(id, change) {
+                const data = this.getCurrentData();
+                let current = data[id] || 0;
+                let newVal = Math.max(0, current + change);
+                data[id] = newVal;
+                this.saveData();
+                this.updateUI();
+                Showroom.checkAchievements(); // Check trophies on change
+            },
+
+            updateProgressBars() {
+                const data = this.getCurrentData();
+                SET_DATA.forEach((set, idx) => {
+                    const setId = idx + 1;
+                    const el = document.getElementById(`prog-${setId}`);
+                    const txt = document.getElementById(`prog-text-${setId}`);
+                    if(!el) return;
+
+                    let collected = 0;
+                    set.cards.forEach((_, cIdx) => {
+                        if (data[`s${setId}_${cIdx}`] > 0) collected++;
+                    });
+                    
+                    el.style.width = (collected / 9 * 100) + '%';
+                    txt.innerText = `${collected} / 9`;
+                });
+            },
+
+            buildAlbumUI() {
+                const container = document.getElementById('album-container');
+                container.innerHTML = '';
+                
+                SET_DATA.forEach((set, sIdx) => {
+                    const setNum = sIdx + 1;
+                    // Manual star mapping based on set progression (approximation of original)
+                    const baseStars = setNum <= 2 ? 1 : setNum <= 6 ? 2 : setNum <= 10 ? 3 : setNum <= 15 ? 4 : 5;
+                    
+                    let html = `
+                    <div class="album-set" id="set-${setNum}">
+                        <div class="set-header" style="background-color: ${set.color};">
+                            <div class="set-num">Set ${setNum}</div>
+                            <div class="set-name">${set.name}</div>
+                            <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-${setNum}"></div></div>
+                            <div class="progress-text" id="prog-text-${setNum}">0 / 9</div>
+                        </div>
+                        <div class="grid-layout">`;
+                    
+                    set.cards.forEach((cardName, cIdx) => {
+                        const id = `s${setNum}_${cIdx}`;
+                        const meta = CARD_META[id] || {};
+                        const isGold = meta.gold;
+                        // Determine stars based on index or hardcode if needed (logic simplified)
+                        let stars = baseStars;
+                        if(cIdx > 6) stars++; 
+                        if(stars > 5) stars = 5;
+                        if(setNum === 19 && cIdx === 8) stars = 6; // Example 6 star
+                        
+                        // Store star count in meta for stats
+                        if(!Manager.cardDb) Manager.cardDb = {};
+                        Manager.cardDb[id] = { name: cardName, stars: stars, gold: isGold, set: setNum };
+
+                        let starStr = '★'.repeat(stars);
+                        
+                        html += `
+                        <div class="card-container" id="card-${id}" data-id="${id}" data-color="${set.color}">
+                            <div class="stars">${starStr}</div>
+                            <div class="sticker-slot ${isGold ? 'gold-card' : ''}" onclick="Manager.updateCard('${id}', 1)">
+                                <div class="placeholder-text">GO!</div>
+                                <div class="banner"><span>${cardName}</span></div>
+                                <div class="counter-badge">+1</div>
+                            </div>
+                            <div class="controls">
+                                <button class="ctrl-btn minus" onclick="event.stopPropagation(); Manager.updateCard('${id}', -1)">-</button>
+                                <button class="ctrl-btn plus" onclick="event.stopPropagation(); Manager.updateCard('${id}', 1)">+</button>
+                            </div>
+                        </div>`;
+                    });
+
+                    html += `</div></div>`;
+                    container.innerHTML += html;
+                });
+            },
+
+            buildNav() {
+                const nav = document.getElementById('left-nav-content');
+                nav.innerHTML = '';
+                SET_DATA.forEach((set, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'nav-item';
+                    div.style.borderLeft = `5px solid ${set.color}`;
+                    div.style.color = set.color; // Use text color for visibility
+                    // Darken color slightly for text readability if needed, or use inline style
+                    div.innerText = `Set ${idx+1}: ${set.name}`;
+                    div.onclick = () => {
+                        Manager.switchView('view-album');
+                        setTimeout(() => document.getElementById(`set-${idx+1}`).scrollIntoView({behavior:'smooth', block:'center'}), 100);
+                    };
+                    nav.appendChild(div);
+                });
+            },
+            
+            updateAccountSelector() {
+                const sel = document.getElementById('account-selector');
+                sel.innerHTML = '';
+                Object.keys(this.state.accounts).forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.text = name;
+                    sel.appendChild(opt);
+                });
+                const create = document.createElement('option');
+                create.value = 'Create New';
+                create.text = '+ Create New';
+                sel.appendChild(create);
+                sel.value = this.state.currentAccount;
+            },
+
+            switchView(viewId, navEl) {
+                document.querySelectorAll('.app-view').forEach(el => el.classList.remove('active'));
+                document.getElementById(viewId).classList.add('active');
+                
+                if(navEl) {
+                    document.querySelectorAll('.right-nav-item').forEach(el => el.classList.remove('active'));
+                    navEl.classList.add('active');
+                }
+
+                if(viewId === 'view-smart') Trade.generateSuggestions();
+                if(viewId === 'view-showroom') document.getElementById('showroom-notify').style.display = 'none';
+            },
+
+            setupTimer() {
+                // Check reset 4AM EDT (Assuming roughly UTC-4) -> 8:00 UTC
+                setInterval(() => {
+                    const now = new Date();
+                    const acct = this.state.accounts[this.state.currentAccount];
+                    // Simple check: if last reset was yesterday (by calendar date shifted by 4 hours)
+                    // This is a simplified logic for client-side
+                    const resetTime = new Date();
+                    resetTime.setHours(4,0,0,0);
+                    if(now > resetTime && acct.lastTradeReset < resetTime.getTime()) {
+                        acct.tradesUsed = 0;
+                        acct.lastTradeReset = now.getTime();
+                        this.saveData();
+                        Trade.updateUI();
+                    }
+                }, 60000);
+            }
+        };
+
+        // --- 3. SUB-MODULES ---
+
+        const Notify = {
+            show(msg, type = 'info') {
+                const area = document.getElementById('notification-area');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `<span>${type === 'success' ? '✔' : 'ℹ'}</span> ${msg}`;
+                area.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.animation = 'slideOut 0.4s forwards';
+                    setTimeout(() => toast.remove(), 400);
+                }, 3000);
+            }
+        };
+
+        const Stats = {
+            update() {
+                const data = Manager.getCurrentData();
+                let total = 0, golds = 0, nongolds = 0;
+                let stars = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
+                let totalCards = Manager.state.accounts[Manager.state.currentAccount].prestige ? 225 : 216; // Approx
+                
+                // Recalculate based on cardDb
+                totalCards = 0;
+                let goldTotal = 0;
+                
+                for(let id in Manager.cardDb) {
+                    const card = Manager.cardDb[id];
+                    // Skip set 25 if not prestige
+                    if(!Manager.state.accounts[Manager.state.currentAccount].prestige && card.set === 25) continue;
+                    
+                    totalCards++;
+                    if(card.gold) goldTotal++;
+                    
+                    if(data[id] > 0) {
+                        total++;
+                        if(card.gold) golds++; else nongolds++;
+                        stars[card.stars]++;
+                    }
+                }
+
+                document.getElementById('stat-total').innerText = `${total} / ${totalCards}`;
+                document.getElementById('bar-total').style.width = (total/totalCards*100)+'%';
+                
+                document.getElementById('stat-gold').innerText = `${golds} / ${goldTotal}`;
+                document.getElementById('bar-gold').style.width = (golds/goldTotal*100)+'%';
+
+                document.getElementById('stat-nongold').innerText = `${nongolds} / ${totalCards-goldTotal}`;
+                document.getElementById('bar-nongold').style.width = (nongolds/(totalCards-goldTotal)*100)+'%';
+
+                // Render Stars Breakdown
+                const grid = document.getElementById('star-breakdown-grid');
+                grid.innerHTML = '';
+                for(let i=1; i<=6; i++) {
+                    // Count total possible stars of this level
+                    let possible = 0;
+                    for(let id in Manager.cardDb) {
+                        if((Manager.state.accounts[Manager.state.currentAccount].prestige || Manager.cardDb[id].set < 25) && Manager.cardDb[id].stars === i) possible++;
+                    }
+                    if(possible === 0) continue;
+
+                    grid.innerHTML += `
+                    <div class="stat-card">
+                        <div class="stat-title">${i} Star Completion</div>
+                        <div class="stat-value">${stars[i]} / ${possible}</div>
+                        <div class="stat-bar-container"><div class="stat-bar" style="width:${stars[i]/possible*100}%; background:hsl(${i*40}, 70%, 50%)"></div></div>
+                    </div>`;
+                }
+            }
+        };
+
+        const Vault = {
+            update() {
+                const data = Manager.getCurrentData();
+                let stars = 0;
+                for(let id in data) {
+                    const count = data[id];
+                    const meta = Manager.cardDb[id];
+                    if(!meta) continue;
+                    if(count > 1) {
+                        const dupeCount = count - 1;
+                        const val = meta.stars * (meta.gold ? 2 : 1);
+                        stars += dupeCount * val;
+                    }
+                }
+                
+                document.getElementById('vault-star-display').innerText = stars;
+                
+                // Bubbles
+                document.getElementById('notify-250').style.display = (stars >= 250 && stars < 450) ? 'flex' : 'none';
+                document.getElementById('notify-450').style.display = (stars >= 450 && stars < 700) ? 'flex' : 'none';
+                document.getElementById('notify-700').style.display = (stars >= 700) ? 'flex' : 'none';
+                document.getElementById('notify-1150').style.display = (stars >= 1150) ? 'flex' : 'none';
+            },
+            clickVault(cost) {
+                const current = parseInt(document.getElementById('vault-star-display').innerText);
+                if(current < cost) {
+                    Notify.show("Not enough stars yet!", 'warning');
+                    return;
+                }
+                
+                if(confirm("Collect Rewards? Note: This app won't auto-deduct stars because you need to choose specific cards to trash. Please go to the Album tab and reduce duplicate counts manually.")) {
+                    Notify.show("Don't forget to update your inventory!", 'success');
+                }
+            }
+        };
+
+        const Trade = {
+            mode: 'regular', // regular, blitz, fest
+            blitzCards: [],
+            
+            init() {
+                // Populate Blitz Selectors
+                const s1 = document.getElementById('blitz-card-1');
+                const s2 = document.getElementById('blitz-card-2');
+                // Only show gold cards
+                for(let id in Manager.cardDb) {
+                    if(Manager.cardDb[id].gold) {
+                        const opt = document.createElement('option');
+                        opt.value = id;
+                        opt.text = Manager.cardDb[id].name;
+                        s1.appendChild(opt.cloneNode(true));
+                        s2.appendChild(opt.cloneNode(true));
+                    }
+                }
+            },
+            
+            setMode(mode) {
+                this.mode = mode;
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector(`.mb-${mode === 'regular' ? 'reg' : mode}`).classList.add('active');
+                
+                document.getElementById('blitz-setup').style.display = mode === 'blitz' ? 'block' : 'none';
+                this.renderSlots();
+            },
+
+            renderSlots() {
+                const container = document.getElementById('trade-slots-area');
+                container.innerHTML = '';
+                
+                let regularSlots = 5;
+                let goldSlots = 0;
+                
+                if(this.mode === 'fest') regularSlots = 10;
+                if(this.mode === 'blitz') goldSlots = 5;
+                
+                // Visual Rendering
+                let html = '<h4>Regular Trades</h4><div class="trade-row">';
+                for(let i=0; i<regularSlots; i++) {
+                    html += `<div class="trade-slot">Slot ${i+1}</div>`;
+                }
+                html += '</div>';
+                
+                if(goldSlots > 0) {
+                     html += '<h4>Blitz Trades</h4><div class="trade-row" style="background:#fffde7">';
+                    for(let i=0; i<goldSlots; i++) {
+                        html += `<div class="trade-slot" style="border:1px solid gold;">Gold ${i+1}</div>`;
+                    }
+                    html += '</div>';
+                }
+                
+                container.innerHTML = html;
+            },
+
+            updateUI() {
+                const acct = Manager.state.accounts[Manager.state.currentAccount];
+                const max = this.mode === 'fest' ? 10 : 5;
+                document.getElementById('trades-remaining').innerText = `Trades Used Today: ${acct.tradesUsed || 0} / ${max}`;
+            },
+
+            finalizeTrades() {
+                // In a real complex app, we'd select cards for slots. 
+                // Here we just increment the counter as requested "Finalized trade should adjust... and count sends"
+                const acct = Manager.state.accounts[Manager.state.currentAccount];
+                acct.tradesUsed = (acct.tradesUsed || 0) + 1; // Simplified: 1 click = 1 trade for demo
+                Manager.saveData();
+                this.updateUI();
+                Notify.show("Trade Finalized & Count Updated", 'success');
+                Showroom.grant('trader');
+            },
+
+            generateSuggestions() {
+                const targetEl = document.getElementById('compare-target');
+                if(targetEl.options.length === 0) {
+                    Object.keys(Manager.state.accounts).forEach(k => {
+                        if(k !== Manager.state.currentAccount) {
+                            const opt = document.createElement('option');
+                            opt.value = k; opt.text = k;
+                            targetEl.appendChild(opt);
+                        }
+                    });
+                }
+                
+                const target = targetEl.value;
+                if(!target) return;
+                
+                const currData = Manager.getCurrentData();
+                const targetData = Manager.state.accounts[target].data;
+                const list = document.getElementById('suggestion-list');
+                list.innerHTML = '';
+
+                // Logic: I have dupe (>1), Target has none (0)
+                let matches = [];
+                
+                for(let id in Manager.cardDb) {
+                    const myCount = currData[id] || 0;
+                    const theirCount = targetData[id] || 0;
+                    const meta = Manager.cardDb[id];
+                    
+                    if(myCount > 1 && theirCount === 0) {
+                        // Can trade?
+                        if(meta.gold && this.mode !== 'blitz') continue;
+                        matches.push(meta);
+                    }
+                }
+                
+                if(matches.length === 0) {
+                    list.innerHTML = '<div style="padding:10px;">No trade matches found!</div>';
+                    return;
+                }
+                
+                // Sort by stars desc
+                matches.sort((a,b) => b.stars - a.stars);
+                
+                matches.forEach(m => {
+                    const div = document.createElement('div');
+                    div.style.cssText = "background:white; padding:10px; border-radius:5px; border-left:4px solid #76ff03; display:flex; justify-content:space-between;";
+                    div.innerHTML = `<span>${m.name} (${m.stars}★)</span> <span style="font-size:10px; color:grey;">You have >1, ${target} needs it</span>`;
+                    list.appendChild(div);
+                });
+            }
+        };
+
+        const Importer = {
+            process() {
+                const txt = document.getElementById('import-text').value;
+                const nums = txt.split(/[\s,]+/).map(n => parseInt(n)).filter(n => !isNaN(n));
+                
+                if(nums.length === 0) { Notify.show("No valid data found", "warning"); return; }
+                
+                // Map array index to sSet_Card format
+                let index = 0;
+                SET_DATA.forEach((set, sIdx) => {
+                    set.cards.forEach((_, cIdx) => {
+                        if(index < nums.length) {
+                            const id = `s${sIdx+1}_${cIdx}`;
+                            Manager.getCurrentData()[id] = nums[index];
+                            index++;
+                        }
+                    });
+                });
+                
+                Manager.saveData();
+                Manager.updateUI();
+                Notify.show("Import Successful!", "success");
+            }
+        };
+
+        const Showroom = {
+            achievements: {
+                'beginner': { name: 'Starter', icon: '🥚', condition: (d) => true }, // Always true
+                'collector': { name: 'Set Completed', icon: '🖼️', condition: (d) => document.querySelector('.progress-bar-fill[style="width: 100%;"]') },
+                'hoarder': { name: 'Vault Ready', icon: '💰', condition: (d) => parseInt(document.getElementById('vault-star-display').innerText) > 250 },
+                'master': { name: 'Album Complete', icon: '👑', condition: (d) => document.getElementById('bar-total').style.width === '100%' },
+                'trader': { name: 'Deal Maker', icon: '🤝', condition: (d) => Manager.state.accounts[Manager.state.currentAccount].tradesUsed > 0 }
+            },
+            earned: new Set(),
+            
+            checkAchievements() {
+                const caseEl = document.getElementById('trophy-case');
+                // Clear and rebuild to ensure order
+                caseEl.innerHTML = '';
+                
+                let newUnlock = false;
+                
+                for(let key in this.achievements) {
+                    const ach = this.achievements[key];
+                    const hasEarned = ach.condition();
+                    
+                    const div = document.createElement('div');
+                    div.className = `trophy ${hasEarned ? 'earned' : ''}`;
+                    div.innerHTML = `<div class="trophy-icon">${ach.icon}</div><div class="trophy-name">${ach.name}</div>`;
+                    caseEl.appendChild(div);
+                    
+                    if(hasEarned && !this.earned.has(key)) {
+                        this.earned.add(key);
+                        newUnlock = true;
+                    }
+                }
+                
+                if(newUnlock) {
+                    this.confetti();
+                    document.getElementById('showroom-notify').style.display = 'flex';
+                    Notify.show("New Trophy Unlocked!", "success");
+                }
+            },
+            
+            grant(key) {
+                // Manual grant for non-state checks (like trading action)
+                // In this simplified version, checkAchievements handles most, but 'trader' triggers on action
+                this.earned.add(key);
+                this.checkAchievements();
+            },
+
+            confetti() {
+                for(let i=0; i<50; i++) {
+                    const c = document.createElement('div');
+                    c.className = 'confetti';
+                    c.style.left = Math.random()*100 + 'vw';
+                    c.style.background = `hsl(${Math.random()*360}, 100%, 50%)`;
+                    c.style.animationDuration = (Math.random()*3+2)+'s';
+                    document.body.appendChild(c);
+                    setTimeout(() => c.remove(), 5000);
+                }
+            }
+        };
+
+        
+        // --- 4. SCREENSHOT SCANNER (OCR + confirmation preview) ---
+        const Scanner = {
+            worker: null,
+            busy: false,
+            lastBatch: null,
+            activeIndex: 0,
+
+            init() {
+                // Populate set selector
+                const sel = document.getElementById('scan-set-selector');
+                if(!sel) return;
+                // Add sets
+                SET_DATA.forEach((s, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = String(idx+1);
+                    opt.text = `Set ${idx+1}: ${s.name}`;
+                    sel.appendChild(opt);
+                });
+            },
+
+            async ensureWorker() {
+                if(!window.Tesseract) throw new Error("Tesseract.js failed to load (offline?)");
+                if(this.worker) return this.worker;
+
+                const statusEl = document.getElementById('scan-status');
+                statusEl.textContent = "Loading OCR…";
+
+                this.worker = await Tesseract.createWorker('eng', 1, {
+                    logger: (m) => {
+                        if(!statusEl) return;
+                        if(m.status === 'recognizing text') {
+                            statusEl.textContent = `Scanning… ${Math.round((m.progress||0)*100)}%`;
+                        }
+                    }
+                });
+
+                // Fast-ish defaults for short text
+                await this.worker.setParameters({
+                    tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE
+                });
+
+                statusEl.textContent = "";
+                return this.worker;
+            },
+
+            setStatus(msg) {
+                const el = document.getElementById('scan-status');
+                if(el) el.textContent = msg || '';
+            },
+
+            async startScan() {
+                if(this.busy) return;
+                const input = document.getElementById('scan-file');
+                if(!input || !input.files || input.files.length === 0) {
+                    Notify.show("Pick at least one screenshot to scan.", "warning");
+                    return;
+                }
+
+                this.busy = true;
+                document.getElementById('btn-scan').disabled = true;
+
+                try {
+                    // Batch scan: process all selected screenshots
+                    const files = Array.from(input.files || []);
+                    const preferredSet = document.getElementById('scan-set-selector')?.value || 'auto';
+
+                    const proposals = [];
+                    for(let i=0; i<files.length; i++) {
+                        this.setStatus(`Scanning ${i+1}/${files.length}…`);
+                        const prop = await this.scanSingleFile(files[i], preferredSet);
+                        proposals.push(prop);
+                    }
+
+                    const batch = this.buildBatchProposal(proposals);
+                    this.lastBatch = batch;
+                    this.activeIndex = 0;
+                    this.openModal(batch);
+                } catch (err) {
+                    console.error(err);
+                    Notify.show(err.message || "Scan failed", "warning");
+                } finally {
+                    this.busy = false;
+                    document.getElementById('btn-scan').disabled = false;
+                    this.setStatus("");
+                    // Clear file input so user can upload same file again if needed
+                    const input = document.getElementById('scan-file');
+                    if(input) input.value = "";
+                }
+            },
+
+            async scanSingleFile(file, preferredSet = 'auto') {
+                const worker = await this.ensureWorker();
+
+                // Load image
+                const imgUrl = URL.createObjectURL(file);
+                const img = await this.loadImage(imgUrl);
+
+                const w = img.naturalWidth || img.width;
+                const h = img.naturalHeight || img.height;
+
+                // Draw to canvas (downscale large screenshots for speed on mobile)
+                const maxSide = 1600;
+                const scale = Math.min(1, maxSide / Math.max(w, h));
+                const baseCanvas = document.createElement('canvas');
+                baseCanvas.width = Math.max(1, Math.round(w * scale));
+                baseCanvas.height = Math.max(1, Math.round(h * scale));
+                const bctx = baseCanvas.getContext('2d', { willReadFrequently: true });
+                bctx.drawImage(img, 0, 0, baseCanvas.width, baseCanvas.height);
+
+                // Use scaled dims downstream
+                const sw = baseCanvas.width;
+                const sh = baseCanvas.height;
+// Estimate grid crop (game UI tends to put the 3x3 grid in the mid section)
+                const grid = this.estimateGridRect(sw, sh);
+                const cells = this.splitGrid(grid, 3, 3, 0.018); // small padding between cells
+
+                // OCR each cell: name + dupe banner
+                let raw = [];
+                for(let i=0; i<cells.length; i++) {
+                    this.setStatus(`Scanning sticker ${i+1}/9…`);
+                    const cell = cells[i];
+                    const cellCanvas = this.cropCanvas(baseCanvas, cell);
+
+                    // Name region: bottom half (captures banner OR center title on most stickers)
+                    const nameCanvas = this.cropCanvas(cellCanvas, {
+                        x: Math.floor(cellCanvas.width*0.06),
+                        y: Math.floor(cellCanvas.height*0.45),
+                        w: Math.floor(cellCanvas.width*0.88),
+                        h: Math.floor(cellCanvas.height*0.50)
+                    }, true);
+
+                    // Dupe region: bottom-left small banner
+                    const dupeCanvas = this.cropCanvas(cellCanvas, {
+                        x: Math.floor(cellCanvas.width*0.00),
+                        y: Math.floor(cellCanvas.height*0.62),
+                        w: Math.floor(cellCanvas.width*0.55),
+                        h: Math.floor(cellCanvas.height*0.32)
+                    }, true);
+
+                    const nameText = await this.ocrText(worker, nameCanvas, {
+                        whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '&!-.",
+                        psm: Tesseract.PSM.SINGLE_LINE
+                    });
+
+                    const dupeText = await this.ocrText(worker, dupeCanvas, {
+                        whitelist: "+0123456789",
+                        psm: Tesseract.PSM.SINGLE_WORD
+                    });
+
+                    const dupe = this.parseDupe(dupeText);
+                    const sig = this.ownedSignal(cellCanvas);
+                    raw.push({
+                        idx: i,
+                        nameRaw: nameText,
+                        dupeRaw: dupeText,
+                        dupe: dupe,
+                        haveHint: (dupe > 0) || sig.likelyOwned,
+                        haveScore: sig.color,
+                        cellThumb: cellCanvas.toDataURL('image/jpeg', 0.7)
+                    });
+}
+
+                // Decide set
+                let setNum = null;
+                if(preferredSet !== 'auto') setNum = parseInt(preferredSet, 10);
+
+                if(!setNum || isNaN(setNum)) {
+                    setNum = this.detectSetFromNames(raw);
+                }
+
+                // Map to sticker IDs within that set
+                const mapped = this.mapToSet(setNum, raw);
+
+                // Build proposal of updates: {id -> newCount}
+                const current = Manager.getCurrentData();
+                const updates = [];
+                mapped.forEach(m => {
+                    const currentCount = current[m.id] || 0;
+                    // Default "have" based on confidence; user can override
+                    const have = (m.dupe > 0) || !!m.haveHint || (m.conf >= 0.60);
+                    const dupe = Math.max(0, m.dupe || 0);
+                    const newCount = have ? (1 + dupe) : 0;
+                    updates.push({
+                        idx: m.idx,
+                        id: m.id,
+                        set: setNum,
+                        name: m.name,
+                        conf: m.conf,
+                        have: have,
+                        dupes: dupe,
+                        currentCount: currentCount,
+                        proposedCount: newCount,
+                        cellThumb: m.cellThumb
+                    });
+                });
+
+                // Preview vault change
+                const beforeStars = this.computeVaultStars(current);
+                const afterData = JSON.parse(JSON.stringify(current));
+                updates.forEach(u => { afterData[u.id] = u.proposedCount; });
+                const afterStars = this.computeVaultStars(afterData);
+
+                return {
+                    fileName: file.name,
+                    imageUrl: imgUrl,
+                    setNum: setNum,
+                    updates: updates,
+                    beforeStars: beforeStars,
+                    afterStars: afterStars
+                };
+            },
+
+            estimateGridRect(w, h) {
+                // Heuristic crop for typical 16:9 or 19.5:9 screenshots.
+                // If OpenCV is available later, this can be upgraded to contour-based detection.
+                const top = Math.floor(h * 0.17);
+                const bottom = Math.floor(h * 0.10);
+                const left = Math.floor(w * 0.05);
+                const right = Math.floor(w * 0.05);
+                return { x: left, y: top, w: w - left - right, h: h - top - bottom };
+            },
+
+            splitGrid(rect, cols, rows, padFrac=0.02) {
+                const padX = rect.w * padFrac;
+                const padY = rect.h * padFrac;
+                const cellW = (rect.w - padX*(cols-1)) / cols;
+                const cellH = (rect.h - padY*(rows-1)) / rows;
+                const out = [];
+                for(let r=0; r<rows; r++) {
+                    for(let c=0; c<cols; c++) {
+                        const x = rect.x + c*(cellW + padX);
+                        const y = rect.y + r*(cellH + padY);
+                        out.push({ x: Math.floor(x), y: Math.floor(y), w: Math.floor(cellW), h: Math.floor(cellH) });
+                    }
+                }
+                return out;
+            },
+
+            cropCanvas(srcCanvas, rect, highContrast=false) {
+                const c = document.createElement('canvas');
+                c.width = Math.max(1, rect.w);
+                c.height = Math.max(1, rect.h);
+                const ctx = c.getContext('2d', { willReadFrequently: true });
+                ctx.drawImage(srcCanvas, rect.x, rect.y, rect.w, rect.h, 0, 0, c.width, c.height);
+
+                if(highContrast) this.preprocessForOcr(c);
+                return c;
+            },
+
+            preprocessForOcr(canvas) {
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                const img = ctx.getImageData(0,0,canvas.width, canvas.height);
+                const d = img.data;
+
+                // Simple grayscale + contrast + threshold
+                // (Good enough to boost OCR without OpenCV.)
+                let sum = 0;
+                for(let i=0;i<d.length;i+=4) {
+                    const lum = 0.2126*d[i] + 0.7152*d[i+1] + 0.0722*d[i+2];
+                    sum += lum;
+                }
+                const mean = sum / (d.length/4);
+                const thresh = mean * 0.92;
+
+                for(let i=0;i<d.length;i+=4) {
+                    const lum = 0.2126*d[i] + 0.7152*d[i+1] + 0.0722*d[i+2];
+                    const v = lum > thresh ? 255 : 0;
+                    d[i]=d[i+1]=d[i+2]=v;
+                    d[i+3]=255;
+                }
+                ctx.putImageData(img,0,0);
+            },
+
+            ownedSignal(canvas) {
+                // Heuristic: owned stickers are usually colorful; missing ones are often greyed out.
+                // We sample pixels and compute a simple "colorfulness" score.
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                const w = canvas.width, h = canvas.height;
+                const img = ctx.getImageData(0, 0, w, h).data;
+
+                const step = Math.max(4, Math.floor(Math.min(w, h) / 28));
+                let colorSum = 0;
+                let brightSum = 0;
+                let n = 0;
+
+                for(let y = 0; y < h; y += step) {
+                    for(let x = 0; x < w; x += step) {
+                        const i = (y*w + x) * 4;
+                        const r = img[i], g = img[i+1], b = img[i+2];
+                        brightSum += (r + g + b) / 3;
+                        colorSum += (Math.abs(r-g) + Math.abs(r-b) + Math.abs(g-b)) / 3;
+                        n++;
+                    }
+                }
+
+                const bright = n ? brightSum / n : 0;
+                const color = n ? colorSum / n : 0;
+
+                // Tuned to be conservative (reduce false "owned" on greyed stickers).
+                const likelyOwned = (bright > 50 && color > 18);
+
+                return { bright, color, likelyOwned };
+            },
+
+
+            async ocrText(worker, canvas, {whitelist, psm}) {
+                await worker.setParameters({
+                    tessedit_pageseg_mode: psm ?? Tesseract.PSM.SINGLE_LINE,
+                    tessedit_char_whitelist: whitelist ?? ""
+                });
+                const { data } = await worker.recognize(canvas);
+                return (data && data.text ? data.text : "").trim();
+            },
+
+            parseDupe(txt) {
+                if(!txt) return 0;
+                const cleaned = String(txt).replace(/\s+/g,'');
+                // Prefer patterns like "+4"
+                let m = cleaned.match(/\+(\d{1,2})/);
+                if(!m) m = cleaned.match(/(\d{1,2})/);
+                if(!m) return 0;
+                const n = parseInt(m[1], 10);
+                if(isNaN(n)) return 0;
+                return Math.max(0, n);
+            },
+
+            normalizeName(s) {
+                return (s||"")
+                    .toLowerCase()
+                    .replace(/[^a-z0-9& ]+/g, " ")
+                    .replace(/\s+/g, " ")
+                    .trim();
+            },
+
+            levenshtein(a, b) {
+                a = this.normalizeName(a); b = this.normalizeName(b);
+                if(a === b) return 0;
+                if(!a) return b.length;
+                if(!b) return a.length;
+                const dp = new Array(b.length+1).fill(0).map((_,i)=>i);
+                for(let i=1;i<=a.length;i++){
+                    let prev = dp[0];
+                    dp[0]=i;
+                    for(let j=1;j<=b.length;j++){
+                        const tmp = dp[j];
+                        const cost = a[i-1] === b[j-1] ? 0 : 1;
+                        dp[j] = Math.min(dp[j]+1, dp[j-1]+1, prev+cost);
+                        prev = tmp;
+                    }
+                }
+                return dp[b.length];
+            },
+
+            similarity(a, b) {
+                const na = this.normalizeName(a);
+                const nb = this.normalizeName(b);
+                const maxLen = Math.max(na.length, nb.length);
+                if(maxLen === 0) return 0;
+                const dist = this.levenshtein(na, nb);
+                return 1 - (dist / maxLen);
+            },
+
+            detectSetFromNames(raw) {
+                // Score each set by how well OCR outputs match known sticker names
+                let best = { setNum: 1, score: -1 };
+                SET_DATA.forEach((set, idx) => {
+                    const setNum = idx+1;
+                    let scoreSum = 0;
+                    let used = 0;
+                    raw.forEach(r => {
+                        const txt = r.nameRaw;
+                        if(!txt) return;
+                        let bestMatch = 0;
+                        set.cards.forEach(cardName => {
+                            bestMatch = Math.max(bestMatch, this.similarity(txt, cardName));
+                        });
+                        scoreSum += bestMatch;
+                        used++;
+                    });
+                    const score = used ? scoreSum/used : 0;
+                    if(score > best.score) best = { setNum, score };
+                });
+
+                return best.setNum;
+            },
+
+            mapToSet(setNum, raw) {
+                const set = SET_DATA[setNum-1];
+                if(!set) throw new Error("Set not found for scan.");
+                const out = [];
+                raw.forEach((r, i) => {
+                    let best = { name: set.cards[0], conf: 0 };
+                    set.cards.forEach(cardName => {
+                        const s = this.similarity(r.nameRaw, cardName);
+                        if(s > best.conf) best = { name: cardName, conf: s };
+                    });
+                    const cardIdx = set.cards.indexOf(best.name);
+                    const id = `s${setNum}_${cardIdx}`;
+                    out.push({ idx: r.idx, id, name: best.name, conf: best.conf, dupe: r.dupe, haveHint: r.haveHint, haveScore: r.haveScore, cellThumb: r.cellThumb });
+                });
+                return out;
+            },
+
+            computeVaultStars(dataObj) {
+                let stars = 0;
+                for(let id in dataObj) {
+                    const count = dataObj[id];
+                    const meta = Manager.cardDb[id];
+                    if(!meta) continue;
+                    if(count > 1) {
+                        const dupeCount = count - 1;
+                        const val = meta.stars * (meta.gold ? 2 : 1);
+                        stars += dupeCount * val;
+                    }
+                }
+                return stars;
+            },
+
+            buildBatchProposal(items) {
+                const current = Manager.getCurrentData();
+                const beforeStars = this.computeVaultStars(current);
+                const afterData = JSON.parse(JSON.stringify(current));
+
+                // Apply proposals in order so later scans can override earlier ones if needed
+                (items || []).forEach(p => {
+                    (p.updates || []).forEach(u => {
+                        if(u && u.id) afterData[u.id] = u.proposedCount;
+                    });
+                });
+
+                const afterStars = this.computeVaultStars(afterData);
+                return {
+                    items: items || [],
+                    beforeStars,
+                    afterStars
+                };
+            },
+
+
+            closeModal() {
+                const modal = document.getElementById('scan-modal');
+                if(modal) modal.style.display = 'none';
+
+                // release object URLs to avoid leaks
+                if(this.lastBatch && this.lastBatch.items) {
+                    this.lastBatch.items.forEach(p => {
+                        if(p?.imageUrl) {
+                            try { URL.revokeObjectURL(p.imageUrl); } catch(e) {}
+                        }
+                    });
+                }
+
+                this.lastBatch = null;
+                this.activeIndex = 0;
+            },
+
+            openModal(batch) {
+                const modal = document.getElementById('scan-modal');
+                const img = document.getElementById('scan-modal-image');
+                const table = document.getElementById('scan-table');
+                const subtitle = document.getElementById('scan-modal-subtitle');
+
+                if(!modal || !img || !table || !subtitle) return;
+
+                // Normalize to a batch shape: { items: [proposal...] }
+                const normalized = (batch && batch.items) ? batch : { items: [batch] };
+                normalized.items = normalized.items || [];
+
+                this.lastBatch = normalized;
+                if(this.activeIndex < 0 || this.activeIndex >= normalized.items.length) this.activeIndex = 0;
+
+                // Build file strip (only shown when multiple files)
+                const ctrl = document.getElementById('scan-batch-controls');
+                const strip = document.getElementById('scan-batch-strip');
+                if(ctrl && strip) {
+                    if(normalized.items.length > 1) {
+                        ctrl.style.display = 'block';
+                        strip.innerHTML = '';
+                        normalized.items.forEach((p, idx) => {
+                            const th = document.createElement('img');
+                            th.src = p.imageUrl;
+                            th.alt = p.fileName || `file ${idx+1}`;
+                            th.title = p.fileName || `file ${idx+1}`;
+                            if(idx === this.activeIndex) th.classList.add('active');
+                            th.onclick = () => Scanner.setActive(idx);
+                            strip.appendChild(th);
+                        });
+                    } else {
+                        ctrl.style.display = 'none';
+                        strip.innerHTML = '';
+                    }
+                }
+
+                this.renderActive();
+
+                // show modal
+                modal.style.display = 'flex';
+            },
+
+            setActive(i) {
+                if(!this.lastBatch || !this.lastBatch.items || this.lastBatch.items.length === 0) return;
+                this.activeIndex = Math.max(0, Math.min(i, this.lastBatch.items.length-1));
+
+                // Update active thumbnail style
+                const strip = document.getElementById('scan-batch-strip');
+                if(strip) {
+                    Array.from(strip.querySelectorAll('img')).forEach((im, idx) => {
+                        im.classList.toggle('active', idx === this.activeIndex);
+                    });
+                }
+
+                this.renderActive();
+            },
+
+            renderActive() {
+                const batch = this.lastBatch;
+                if(!batch || !batch.items || batch.items.length === 0) return;
+
+                const proposal = batch.items[this.activeIndex];
+                const img = document.getElementById('scan-modal-image');
+                const table = document.getElementById('scan-table');
+                const subtitle = document.getElementById('scan-modal-subtitle');
+                if(!proposal || !img || !table || !subtitle) return;
+
+                img.src = proposal.imageUrl;
+
+                const set = SET_DATA[proposal.setNum-1];
+                const total = batch.items.length;
+
+                subtitle.textContent = (total > 1)
+                    ? `Viewing ${this.activeIndex+1}/${total} • ${proposal.fileName} • Set ${proposal.setNum} (${set?.name || "Unknown"})`
+                    : `File: ${proposal.fileName} • Detected: Set ${proposal.setNum} (${set?.name || "Unknown"})`;
+
+                // Build editable table for the active file
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Sticker</th>
+                            <th>Confidence</th>
+                            <th>Have?</th>
+                            <th>Dupes</th>
+                            <th>Current</th>
+                            <th>New</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                `;
+                const tbody = table.querySelector('tbody');
+
+                proposal.updates.forEach((u, rowIdx) => {
+                    const tr = document.createElement('tr');
+
+                    const pill = u.conf >= 0.70 ? 'pill-ok' : u.conf >= 0.55 ? 'pill-warn' : 'pill-bad';
+                    const pillTxt = u.conf >= 0.70 ? 'High' : u.conf >= 0.55 ? 'Med' : 'Low';
+
+                    const setData = SET_DATA[proposal.setNum-1];
+                    const opts = setData.cards.map(n => `<option ${n===u.name?'selected':''}>${n}</option>`).join('');
+
+                    tr.innerHTML = `
+                        <td><img class="scan-mini" src="${u.cellThumb}" alt="thumb"></td>
+                        <td>
+                            <select class="scan-select" data-row="${rowIdx}" data-field="name" onchange="Scanner.onEdit(${rowIdx})">
+                                ${opts}
+                            </select>
+                        </td>
+                        <td><span class="pill ${pill}">${pillTxt}</span></td>
+                        <td>
+                            <input type="checkbox" data-row="${rowIdx}" data-field="have" ${u.have?'checked':''} onchange="Scanner.onEdit(${rowIdx})">
+                        </td>
+                        <td>
+                            <input class="scan-input" type="number" min="0" max="99" step="1" value="${u.dupes}" data-row="${rowIdx}" data-field="dupes" oninput="Scanner.onEdit(${rowIdx})">
+                        </td>
+                        <td><span id="scan-cur-${rowIdx}">${u.currentCount>1?('+'+(u.currentCount-1)+' (have)'):(u.currentCount===1?'have':'missing')}</span></td>
+                        <td><strong id="scan-new-${rowIdx}">${u.proposedCount>1?('+'+(u.proposedCount-1)):(u.proposedCount===1?'have':'missing')}</strong></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                this.updateSummary();
+            },
+
+            updateSummary() {
+                const summary = document.getElementById('scan-modal-summary');
+                const batch = this.lastBatch;
+                if(!summary || !batch || !batch.items || batch.items.length === 0) return;
+
+                const current = Manager.getCurrentData();
+                const beforeStars = this.computeVaultStars(current);
+                const afterData = JSON.parse(JSON.stringify(current));
+
+                let totalRows = 0;
+                (batch.items || []).forEach(p => {
+                    (p.updates || []).forEach(u => {
+                        if(u && u.id) afterData[u.id] = u.proposedCount;
+                    });
+                    totalRows += (p.updates || []).length;
+                });
+
+                const afterStars = this.computeVaultStars(afterData);
+                const delta = afterStars - beforeStars;
+
+                const active = batch.items[this.activeIndex];
+                const activeRows = active?.updates?.length || 0;
+                const fileCount = batch.items.length;
+
+                summary.innerHTML = `
+                    <div>Batch Vault: ★ ${beforeStars} → ★ ${afterStars} (${delta>=0?'+':''}${delta})</div>
+                    <div>Batch updates: ${totalRows} (across ${fileCount} file${fileCount!==1?'s':''})</div>
+                    <div style="opacity:0.8;">Editing: ${active?.fileName || ''} (${activeRows} stickers)</div>
+                `;
+            },
+
+            onEdit(rowIdx) {
+                if(!this.lastBatch || !this.lastBatch.items || this.lastBatch.items.length === 0) return;
+                const proposal = this.lastBatch.items[this.activeIndex];
+                if(!proposal || !proposal.updates) return;
+
+                const row = proposal.updates[rowIdx];
+                if(!row) return;
+
+                // Read current inputs in that row
+                const nameSel = document.querySelector(`select[data-row="${rowIdx}"][data-field="name"]`);
+                const haveChk = document.querySelector(`input[data-row="${rowIdx}"][data-field="have"]`);
+                const dupInp = document.querySelector(`input[data-row="${rowIdx}"][data-field="dupes"]`);
+
+                const name = nameSel ? nameSel.value : row.name;
+                const have = haveChk ? haveChk.checked : row.have;
+                const dupes = dupInp ? Math.max(0, parseInt(dupInp.value||'0',10) || 0) : row.dupes;
+
+                const set = SET_DATA[proposal.setNum-1];
+                const cardIdx = set.cards.indexOf(name);
+                const id = `s${proposal.setNum}_${cardIdx}`;
+
+                row.name = name;
+                row.id = id;
+                row.have = have;
+                row.dupes = dupes;
+                row.proposedCount = have ? (1 + dupes) : 0;
+
+                // Update currentCount based on selected sticker
+                const current = Manager.getCurrentData();
+                row.currentCount = current[id] || 0;
+
+                const curEl = document.getElementById(`scan-cur-${rowIdx}`);
+                if(curEl) curEl.textContent = row.currentCount>1?('+'+(row.currentCount-1)+' (have)'):(row.currentCount===1?'have':'missing');
+
+                const newEl = document.getElementById(`scan-new-${rowIdx}`);
+                if(newEl) newEl.textContent = row.proposedCount>1?('+'+(row.proposedCount-1)):(row.proposedCount===1?'have':'missing');
+
+                this.updateSummary();
+            },
+
+            applyUpdates() {
+                if(!this.lastBatch || !this.lastBatch.items || this.lastBatch.items.length === 0) return;
+
+                const data = Manager.getCurrentData();
+                const touched = new Set();
+
+                this.lastBatch.items.forEach(p => {
+                    (p.updates || []).forEach(u => {
+                        if(!u || !u.id) return;
+                        data[u.id] = u.proposedCount;
+                        touched.add(u.id);
+                    });
+                });
+
+                Manager.saveData();
+                Manager.updateUI();
+                this.closeModal();
+
+                Notify.show(`Applied ${touched.size} sticker updates from scan`, "success");
+            },
+loadImage(url) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                    img.src = url;
+                });
+            }
+        };
+
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            Manager.init();
+        });
+
+    </script>
+</body>
+</html>

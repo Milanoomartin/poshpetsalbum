@@ -1091,7 +1091,8 @@
 
                 // Fast-ish defaults for short text
                 await this.worker.setParameters({
-                    tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE
+                    tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE,
+                    preserve_interword_spaces: '1'
                 });
 
                 statusEl.textContent = "";
@@ -1162,12 +1163,27 @@
                 const bctx = baseCanvas.getContext('2d', { willReadFrequently: true });
                 bctx.drawImage(img, 0, 0, baseCanvas.width, baseCanvas.height);
 
+                
                 // Use scaled dims downstream
                 const sw = baseCanvas.width;
                 const sh = baseCanvas.height;
-// Estimate grid crop (game UI tends to put the 3x3 grid in the mid section)
-                const grid = this.estimateGridRect(sw, sh);
-                const cells = this.splitGrid(grid, 3, 3, 0.018); // small padding between cells
+
+                // Detect set number early (so name matching can be constrained to just this set)
+                let setNum = null;
+                if(preferredSet !== 'auto') setNum = parseInt(preferredSet, 10);
+                if(!setNum || isNaN(setNum)) {
+                    setNum = await this.detectSetFromFooter(worker, baseCanvas);
+                }
+
+                // Find 9 sticker tiles via OpenCV contours (much more robust than fixed ratios).
+                // Fallback to the old fixed-grid estimate if needed.
+                let cellRects = await this.detectCellsOpenCv(baseCanvas);
+                if(!cellRects || cellRects.length !== 9) {
+                    const grid = this.estimateGridRect(sw, sh);
+                    cellRects = this.splitGrid(grid, 3, 3, 0.018);
+                }
+
+                const cells = cellRects;
 
                 // OCR each cell: name + dupe banner
                 let raw = [];
@@ -1177,51 +1193,50 @@
                     const cellCanvas = this.cropCanvas(baseCanvas, cell);
 
                     // Name regions:
-// - Banner name: bottom ribbon (most owned stickers)
-// - Center name: grey placeholders / some layouts
-const bannerCanvas = this.cropCanvas(cellCanvas, {
-    x: Math.floor(cellCanvas.width*0.06),
-    y: Math.floor(cellCanvas.height*0.70),
-    w: Math.floor(cellCanvas.width*0.88),
-    h: Math.floor(cellCanvas.height*0.24)
-}, true, "text");
+                    // - Banner name: bottom ribbon (owned stickers)
+                    // - Center name: grey placeholders / some layouts
+                    const bannerCanvas = this.cropCanvas(cellCanvas, {
+                        x: Math.floor(cellCanvas.width*0.05),
+                        y: Math.floor(cellCanvas.height*0.70),
+                        w: Math.floor(cellCanvas.width*0.90),
+                        h: Math.floor(cellCanvas.height*0.25)
+                    }, true, "text");
 
-const centerCanvas = this.cropCanvas(cellCanvas, {
-    x: Math.floor(cellCanvas.width*0.12),
-    y: Math.floor(cellCanvas.height*0.36),
-    w: Math.floor(cellCanvas.width*0.76),
-    h: Math.floor(cellCanvas.height*0.20)
-}, true, "text");
+                    const centerCanvas = this.cropCanvas(cellCanvas, {
+                        x: Math.floor(cellCanvas.width*0.10),
+                        y: Math.floor(cellCanvas.height*0.33),
+                        w: Math.floor(cellCanvas.width*0.80),
+                        h: Math.floor(cellCanvas.height*0.22)
+                    }, true, "text");
 
-// Dupe region: small bottom-left badge (contains "+N")
-const dupeCanvas = this.cropCanvas(cellCanvas, {
-    x: Math.floor(cellCanvas.width*0.02),
-    y: Math.floor(cellCanvas.height*0.60),
-    w: Math.floor(cellCanvas.width*0.34),
-    h: Math.floor(cellCanvas.height*0.22)
-}, true, "digits");
+                    // Dupe region: small bottom-left badge (contains "+N")
+                    const dupeCanvas = this.cropCanvas(cellCanvas, {
+                        x: Math.floor(cellCanvas.width*0.01),
+                        y: Math.floor(cellCanvas.height*0.58),
+                        w: Math.floor(cellCanvas.width*0.38),
+                        h: Math.floor(cellCanvas.height*0.26)
+                    }, true, "digits");
 
-const bannerRes = await this.ocrDetailed(worker, bannerCanvas, {
-    whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '&!-.",
-    psm: Tesseract.PSM.SINGLE_LINE,
-    mode: "text"
-});
+                    // OCR (two-pass: try normal + inverted if needed, choose the one that matches best)
+                    const nameWhitelist = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '&!-.,";
+                    const candidates = (setNum && SET_DATA[setNum-1]) ? SET_DATA[setNum-1].cards : null;
 
-const centerRes = await this.ocrDetailed(worker, centerCanvas, {
-    whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '&!-.",
-    psm: Tesseract.PSM.SINGLE_LINE,
-    mode: "text"
-});
+                    const bannerRes = await this.ocrBest(worker, bannerCanvas, {
+                        whitelist: nameWhitelist, psm: Tesseract.PSM.SINGLE_LINE, mode: "text"
+                    }, candidates);
 
-const dupeRes = await this.ocrDetailed(worker, dupeCanvas, {
-    whitelist: "+0123456789",
-    psm: Tesseract.PSM.SINGLE_WORD,
-    mode: "digits"
-});
+                    const centerRes = await this.ocrBest(worker, centerCanvas, {
+                        whitelist: nameWhitelist, psm: Tesseract.PSM.SINGLE_LINE, mode: "text"
+                    }, candidates);
 
-const dupeText = dupeRes.text;
-const dupe = this.parseDupe(dupeText);
+                    const dupeRes = await this.ocrBest(worker, dupeCanvas, {
+                        whitelist: "+0123456789", psm: Tesseract.PSM.SINGLE_WORD, mode: "digits"
+                    }, null);
+
+                    const dupeText = dupeRes.text;
+                    const dupe = this.parseDupe(dupeText);
                     const sig = this.ownedSignal(cellCanvas);
+
                     raw.push({
                         idx: i,
                         nameBannerRaw: bannerRes.text,
@@ -1234,9 +1249,14 @@ const dupe = this.parseDupe(dupeText);
                         haveScore: sig.color,
                         cellThumb: cellCanvas.toDataURL('image/jpeg', 0.7)
                     });
-}
+                }
 
-                // Decide set
+                // If set still unknown, guess by names (using the now-improved OCR text)
+                if(!setNum || isNaN(setNum)) {
+                    setNum = this.detectSetFromNames(raw);
+                }
+
+// Decide set
 let setNum = null;
 if(preferredSet !== 'auto') setNum = parseInt(preferredSet, 10);
 
@@ -1417,7 +1437,154 @@ async preprocessForOcr(canvas, mode="text") {
     }
 },
 
-            ownedSignal(canvas) {
+            
+            cloneCanvas(src) {
+                const c = document.createElement('canvas');
+                c.width = src.width; c.height = src.height;
+                const ctx = c.getContext('2d', { willReadFrequently: true });
+                ctx.drawImage(src, 0, 0);
+                return c;
+            },
+
+            invertCanvas(canvas) {
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                const img = ctx.getImageData(0,0,canvas.width, canvas.height);
+                const d = img.data;
+                for(let i=0;i<d.length;i+=4){
+                    d[i]=255-d[i]; d[i+1]=255-d[i+1]; d[i+2]=255-d[i+2];
+                }
+                ctx.putImageData(img,0,0);
+            },
+
+            async detectCellsOpenCv(baseCanvas) {
+                // Attempts to find the 9 sticker tiles by contouring the card frames.
+                // Falls back to fixed-grid estimation if it can't confidently find 9.
+                try {
+                    await this.ensureOpenCv();
+                    if(!(window.cv && window.cv.Mat)) return null;
+
+                    const src = cv.imread(baseCanvas);
+                    let gray = new cv.Mat();
+                    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+
+                    let blur = new cv.Mat();
+                    cv.GaussianBlur(gray, blur, new cv.Size(5,5), 0, 0, cv.BORDER_DEFAULT);
+
+                    let edges = new cv.Mat();
+                    cv.Canny(blur, edges, 70, 180);
+
+                    // Thicken edges a bit to close gaps around rounded corners
+                    let kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3,3));
+                    cv.dilate(edges, edges, kernel);
+
+                    let contours = new cv.MatVector();
+                    let hierarchy = new cv.Mat();
+                    cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+                    const W = baseCanvas.width, H = baseCanvas.height;
+                    const imgArea = W * H;
+
+                    const minY = Math.floor(H * 0.18);
+                    const maxY = Math.floor(H * 0.83);
+
+                    const rects = [];
+                    for(let i=0; i<contours.size(); i++){
+                        const cnt = contours.get(i);
+                        const r = cv.boundingRect(cnt);
+                        const area = r.width * r.height;
+                        if(area < imgArea * 0.012) continue;
+                        if(area > imgArea * 0.12) continue;
+
+                        const ar = r.width / Math.max(1, r.height);
+                        if(ar < 0.55 || ar > 0.95) continue;
+
+                        const cy = r.y + r.height/2;
+                        if(cy < minY || cy > maxY) continue;
+
+                        rects.push({x:r.x, y:r.y, w:r.width, h:r.height, area});
+                    }
+
+                    // Deduplicate overlapping rects (keep largest)
+                    rects.sort((a,b)=>b.area-a.area);
+                    const picked = [];
+                    const iou = (a,b)=>{
+                        const x1=Math.max(a.x,b.x), y1=Math.max(a.y,b.y);
+                        const x2=Math.min(a.x+a.w,b.x+b.w), y2=Math.min(a.y+a.h,b.y+b.h);
+                        const iw=Math.max(0,x2-x1), ih=Math.max(0,y2-y1);
+                        const inter=iw*ih;
+                        const ua=a.w*a.h + b.w*b.h - inter;
+                        return ua ? inter/ua : 0;
+                    };
+                    for(const r of rects){
+                        let ok=true;
+                        for(const p of picked){
+                            if(iou(r,p) > 0.35){ ok=false; break; }
+                        }
+                        if(ok) picked.push(r);
+                        if(picked.length >= 12) break;
+                    }
+
+                    // We expect exactly 9 tiles; pick the best 9 by area and grid-likeness.
+                    if(picked.length < 8){
+                        src.delete(); gray.delete(); blur.delete(); edges.delete(); contours.delete(); hierarchy.delete(); kernel.delete();
+                        return null;
+                    }
+
+                    // If more than 9, keep the 9 most consistent by height
+                    const cand = picked.slice(0, Math.min(15, picked.length));
+                    const heights = cand.map(r=>r.h).sort((a,b)=>a-b);
+                    const medH = heights[Math.floor(heights.length/2)];
+                    cand.sort((a,b)=>Math.abs(a.h-medH) - Math.abs(b.h-medH));
+                    const best9 = cand.slice(0,9);
+
+                    // Expand slightly to include ribbons and badges
+                    const pad = (r)=> {
+                        const px = Math.round(r.w*0.03);
+                        const py = Math.round(r.h*0.03);
+                        const x = Math.max(0, r.x - px);
+                        const y = Math.max(0, r.y - py);
+                        const w = Math.min(W - x, r.w + px*2);
+                        const h = Math.min(H - y, r.h + py*2);
+                        return {x,y,w,h};
+                    };
+
+                    const out = this.sortGridRects(best9.map(pad));
+
+                    src.delete(); gray.delete(); blur.delete(); edges.delete(); contours.delete(); hierarchy.delete(); kernel.delete();
+                    return (out && out.length === 9) ? out : null;
+                } catch(e){
+                    return null;
+                }
+            },
+
+            sortGridRects(rects) {
+                // Sort 9 rects into row-major (top-left to bottom-right).
+                if(!rects || rects.length === 0) return rects;
+                const rs = rects.slice().sort((a,b)=>a.y-b.y);
+                // cluster into 3 rows by y
+                const rows = [[],[],[]];
+                const ys = rs.map(r=>r.y + r.h/2);
+                const minY = Math.min(...ys), maxY = Math.max(...ys);
+                const band = (maxY - minY) / 3 || 1;
+                rs.forEach(r=>{
+                    const cy = r.y + r.h/2;
+                    let idx = Math.floor((cy - minY) / band);
+                    idx = Math.max(0, Math.min(2, idx));
+                    rows[idx].push(r);
+                });
+                // If clustering failed (not 3 in each), fallback: split by sorted y into thirds
+                if(!(rows[0].length && rows[1].length && rows[2].length)){
+                    const chunk = Math.ceil(rs.length/3);
+                    return [
+                        ...rs.slice(0,chunk).sort((a,b)=>a.x-b.x),
+                        ...rs.slice(chunk,chunk*2).sort((a,b)=>a.x-b.x),
+                        ...rs.slice(chunk*2).sort((a,b)=>a.x-b.x),
+                    ].slice(0,9);
+                }
+                return [...rows[0].sort((a,b)=>a.x-b.x), ...rows[1].sort((a,b)=>a.x-b.x), ...rows[2].sort((a,b)=>a.x-b.x)].slice(0,9);
+            },
+
+ownedSignal(canvas) {
                 // Heuristic: owned stickers are usually colorful; missing ones are often greyed out.
                 // We sample pixels and compute a simple "colorfulness" score.
                 const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -1449,7 +1616,43 @@ async preprocessForOcr(canvas, mode="text") {
             },
 
 
-            async ocrDetailed(worker, canvas, {whitelist, psm, mode} = {}) {
+            
+            async ocrBest(worker, canvas, opts = {}, candidates = null) {
+                // Run OCR; if result looks weak, also try inverted and keep the one
+                // that best matches candidates (if provided), else the higher confidence.
+                const c1 = this.cloneCanvas(canvas);
+                const r1 = await this.ocrDetailed(worker, c1, opts);
+
+                let best = { ...r1, variant: "normal" };
+
+                // Heuristic: only bother with inverted variant when confidence or length is low
+                const weak = (best.conf < 0.45) || (best.text || "").length < 3;
+
+                if(weak) {
+                    const c2 = this.cloneCanvas(canvas);
+                    // force preprocess, then invert
+                    await this.preprocessForOcr(c2, opts.mode || "text");
+                    this.invertCanvas(c2);
+                    const r2 = await this.ocrDetailed(worker, c2, opts);
+
+                    if(candidates && candidates.length) {
+                        const score = (t)=> {
+                            let s=0;
+                            for(const name of candidates) s = Math.max(s, this.similarity(t, name));
+                            return s;
+                        };
+                        const s1 = score(r1.text);
+                        const s2 = score(r2.text);
+                        best = (s2 > s1) ? { ...r2, variant: "inverted" } : { ...r1, variant: "normal" };
+                    } else {
+                        best = (r2.conf > r1.conf) ? { ...r2, variant: "inverted" } : { ...r1, variant: "normal" };
+                    }
+                }
+
+                return best;
+            },
+
+async ocrDetailed(worker, canvas, {whitelist, psm, mode} = {}) {
     if(canvas && canvas.__needsPreprocess) {
         const m = mode || canvas.__needsPreprocess.mode || "text";
         await this.preprocessForOcr(canvas, m);
@@ -1522,10 +1725,10 @@ async ocrText(worker, canvas, {whitelist, psm, mode} = {}) {
     // Crop bottom center "Set X/24"
     const w = baseCanvas.width, h = baseCanvas.height;
     const rect = {
-        x: Math.floor(w * 0.30),
-        y: Math.floor(h * 0.86),
-        w: Math.floor(w * 0.40),
-        h: Math.floor(h * 0.08)
+        x: Math.floor(w * 0.22),
+        y: Math.floor(h * 0.79),
+        w: Math.floor(w * 0.56),
+        h: Math.floor(h * 0.18)
     };
     const c = this.cropCanvas(baseCanvas, rect, true, "digits");
     const { text } = await this.ocrDetailed(worker, c, {

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Monopoly Go! Wizard Suite</title>
+    <title>Monopoly Go! Posh Pets Album Tracker</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Pacifico&display=swap');
@@ -408,7 +408,8 @@
 
 
     <!-- OCR / Vision libs for Screenshot Scanner -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script async src="https://docs.opencv.org/4.x/opencv.js" onload="window.__opencvReady = true;"></script>
 
 
@@ -1175,37 +1176,58 @@
                     const cell = cells[i];
                     const cellCanvas = this.cropCanvas(baseCanvas, cell);
 
-                    // Name region: bottom half (captures banner OR center title on most stickers)
-                    const nameCanvas = this.cropCanvas(cellCanvas, {
-                        x: Math.floor(cellCanvas.width*0.06),
-                        y: Math.floor(cellCanvas.height*0.45),
-                        w: Math.floor(cellCanvas.width*0.88),
-                        h: Math.floor(cellCanvas.height*0.50)
-                    }, true);
+                    // Name regions:
+// - Banner name: bottom ribbon (most owned stickers)
+// - Center name: grey placeholders / some layouts
+const bannerCanvas = this.cropCanvas(cellCanvas, {
+    x: Math.floor(cellCanvas.width*0.06),
+    y: Math.floor(cellCanvas.height*0.70),
+    w: Math.floor(cellCanvas.width*0.88),
+    h: Math.floor(cellCanvas.height*0.24)
+}, true, "text");
 
-                    // Dupe region: bottom-left small banner
-                    const dupeCanvas = this.cropCanvas(cellCanvas, {
-                        x: Math.floor(cellCanvas.width*0.00),
-                        y: Math.floor(cellCanvas.height*0.62),
-                        w: Math.floor(cellCanvas.width*0.55),
-                        h: Math.floor(cellCanvas.height*0.32)
-                    }, true);
+const centerCanvas = this.cropCanvas(cellCanvas, {
+    x: Math.floor(cellCanvas.width*0.12),
+    y: Math.floor(cellCanvas.height*0.36),
+    w: Math.floor(cellCanvas.width*0.76),
+    h: Math.floor(cellCanvas.height*0.20)
+}, true, "text");
 
-                    const nameText = await this.ocrText(worker, nameCanvas, {
-                        whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '&!-.",
-                        psm: Tesseract.PSM.SINGLE_LINE
-                    });
+// Dupe region: small bottom-left badge (contains "+N")
+const dupeCanvas = this.cropCanvas(cellCanvas, {
+    x: Math.floor(cellCanvas.width*0.02),
+    y: Math.floor(cellCanvas.height*0.60),
+    w: Math.floor(cellCanvas.width*0.34),
+    h: Math.floor(cellCanvas.height*0.22)
+}, true, "digits");
 
-                    const dupeText = await this.ocrText(worker, dupeCanvas, {
-                        whitelist: "+0123456789",
-                        psm: Tesseract.PSM.SINGLE_WORD
-                    });
+const bannerRes = await this.ocrDetailed(worker, bannerCanvas, {
+    whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '&!-.",
+    psm: Tesseract.PSM.SINGLE_LINE,
+    mode: "text"
+});
 
-                    const dupe = this.parseDupe(dupeText);
+const centerRes = await this.ocrDetailed(worker, centerCanvas, {
+    whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '&!-.",
+    psm: Tesseract.PSM.SINGLE_LINE,
+    mode: "text"
+});
+
+const dupeRes = await this.ocrDetailed(worker, dupeCanvas, {
+    whitelist: "+0123456789",
+    psm: Tesseract.PSM.SINGLE_WORD,
+    mode: "digits"
+});
+
+const dupeText = dupeRes.text;
+const dupe = this.parseDupe(dupeText);
                     const sig = this.ownedSignal(cellCanvas);
                     raw.push({
                         idx: i,
-                        nameRaw: nameText,
+                        nameBannerRaw: bannerRes.text,
+                        nameBannerConf: bannerRes.conf,
+                        nameCenterRaw: centerRes.text,
+                        nameCenterConf: centerRes.conf,
                         dupeRaw: dupeText,
                         dupe: dupe,
                         haveHint: (dupe > 0) || sig.likelyOwned,
@@ -1215,14 +1237,18 @@
 }
 
                 // Decide set
-                let setNum = null;
-                if(preferredSet !== 'auto') setNum = parseInt(preferredSet, 10);
+let setNum = null;
+if(preferredSet !== 'auto') setNum = parseInt(preferredSet, 10);
 
-                if(!setNum || isNaN(setNum)) {
-                    setNum = this.detectSetFromNames(raw);
-                }
-
-                // Map to sticker IDs within that set
+if(!setNum || isNaN(setNum)) {
+    // First: OCR the footer "Set X/24" (most reliable)
+    setNum = await this.detectSetFromFooter(worker, baseCanvas);
+}
+if(!setNum || isNaN(setNum)) {
+    // Fallback: guess by names
+    setNum = this.detectSetFromNames(raw);
+}
+// Map to sticker IDs within that set
                 const mapped = this.mapToSet(setNum, raw);
 
                 // Build proposal of updates: {id -> newCount}
@@ -1265,14 +1291,15 @@
             },
 
             estimateGridRect(w, h) {
-                // Heuristic crop for typical 16:9 or 19.5:9 screenshots.
-                // If OpenCV is available later, this can be upgraded to contour-based detection.
-                const top = Math.floor(h * 0.17);
-                const bottom = Math.floor(h * 0.10);
-                const left = Math.floor(w * 0.05);
-                const right = Math.floor(w * 0.05);
-                return { x: left, y: top, w: w - left - right, h: h - top - bottom };
-            },
+    // Tuned for your phone screenshots:
+    // - Header occupies ~18-22%
+    // - Bottom nav / margin occupies ~16-20%
+    const top = Math.floor(h * 0.205);
+    const bottom = Math.floor(h * 0.175);
+    const left = Math.floor(w * 0.075);
+    const right = Math.floor(w * 0.075);
+    return { x: left, y: top, w: w - left - right, h: h - top - bottom };
+},
 
             splitGrid(rect, cols, rows, padFrac=0.02) {
                 const padX = rect.w * padFrac;
@@ -1290,40 +1317,105 @@
                 return out;
             },
 
-            cropCanvas(srcCanvas, rect, highContrast=false) {
-                const c = document.createElement('canvas');
-                c.width = Math.max(1, rect.w);
-                c.height = Math.max(1, rect.h);
-                const ctx = c.getContext('2d', { willReadFrequently: true });
-                ctx.drawImage(srcCanvas, rect.x, rect.y, rect.w, rect.h, 0, 0, c.width, c.height);
+            cropCanvas(srcCanvas, rect, highContrast=false, mode="text") {
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, rect.w);
+    c.height = Math.max(1, rect.h);
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(srcCanvas, rect.x, rect.y, rect.w, rect.h, 0, 0, c.width, c.height);
 
-                if(highContrast) this.preprocessForOcr(c);
-                return c;
-            },
+    if(highContrast) {
+        // preprocessForOcr is async (OpenCV init), but we can start it and await later before OCR
+        c.__needsPreprocess = { mode };
+    }
+    return c;
+},
 
-            preprocessForOcr(canvas) {
-                const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                const img = ctx.getImageData(0,0,canvas.width, canvas.height);
-                const d = img.data;
+            cvReady: null,
 
-                // Simple grayscale + contrast + threshold
-                // (Good enough to boost OCR without OpenCV.)
-                let sum = 0;
-                for(let i=0;i<d.length;i+=4) {
-                    const lum = 0.2126*d[i] + 0.7152*d[i+1] + 0.0722*d[i+2];
-                    sum += lum;
-                }
-                const mean = sum / (d.length/4);
-                const thresh = mean * 0.92;
+ensureOpenCv() {
+    if(this.cvReady) return this.cvReady;
+    this.cvReady = new Promise((resolve) => {
+        if(window.cv && window.cv.Mat) return resolve(true);
+        // OpenCV.js calls cv['onRuntimeInitialized'] when ready
+        const tick = () => {
+            if(window.cv && window.cv.Mat) return resolve(true);
+            setTimeout(tick, 50);
+        };
+        tick();
+    });
+    return this.cvReady;
+},
 
-                for(let i=0;i<d.length;i+=4) {
-                    const lum = 0.2126*d[i] + 0.7152*d[i+1] + 0.0722*d[i+2];
-                    const v = lum > thresh ? 255 : 0;
-                    d[i]=d[i+1]=d[i+2]=v;
-                    d[i+3]=255;
-                }
-                ctx.putImageData(img,0,0);
-            },
+async preprocessForOcr(canvas, mode="text") {
+    // mode: "text" (names), "digits" (dupes / set number)
+    // Use OpenCV if available, otherwise fallback to basic thresholding.
+    try {
+        await this.ensureOpenCv();
+        if(!(window.cv && window.cv.Mat)) throw new Error("cv not ready");
+
+        const src = cv.imread(canvas);
+        let gray = new cv.Mat();
+        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+
+        // Upscale to help OCR (especially on small ribbons / badges)
+        const scale = (mode === "digits") ? 3.0 : 2.2;
+        let up = new cv.Mat();
+        cv.resize(gray, up, new cv.Size(0,0), scale, scale, cv.INTER_CUBIC);
+
+        // Denoise a bit
+        let blur = new cv.Mat();
+        cv.GaussianBlur(up, blur, new cv.Size(3,3), 0, 0, cv.BORDER_DEFAULT);
+
+        // Adaptive threshold is excellent for mobile screenshots with gradients
+        let th = new cv.Mat();
+        const block = (mode === "digits") ? 21 : 31;
+        const C = (mode === "digits") ? 6 : 8;
+        cv.adaptiveThreshold(
+            blur,
+            th,
+            255,
+            cv.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv.THRESH_BINARY,
+            block,
+            C
+        );
+
+        // Ensure black text on white background
+        // If it's mostly black already, invert
+        const mean = cv.mean(th)[0];
+        if(mean < 127) cv.bitwise_not(th, th);
+
+        // Draw back to canvas
+        canvas.width = th.cols;
+        canvas.height = th.rows;
+        cv.imshow(canvas, th);
+
+        src.delete(); gray.delete(); up.delete(); blur.delete(); th.delete();
+        return;
+    } catch(e) {
+        // Fallback: simple grayscale + threshold
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const img = ctx.getImageData(0,0,canvas.width, canvas.height);
+        const d = img.data;
+
+        let sum = 0;
+        for(let i=0;i<d.length;i+=4) {
+            const lum = 0.2126*d[i] + 0.7152*d[i+1] + 0.0722*d[i+2];
+            sum += lum;
+        }
+        const mean = sum / (d.length/4);
+        const thresh = mean * (mode === "digits" ? 0.90 : 0.92);
+
+        for(let i=0;i<d.length;i+=4) {
+            const lum = 0.2126*d[i] + 0.7152*d[i+1] + 0.0722*d[i+2];
+            const v = lum > thresh ? 255 : 0;
+            d[i]=d[i+1]=d[i+2]=v;
+            d[i+3]=255;
+        }
+        ctx.putImageData(img,0,0);
+    }
+},
 
             ownedSignal(canvas) {
                 // Heuristic: owned stickers are usually colorful; missing ones are often greyed out.
@@ -1357,14 +1449,26 @@
             },
 
 
-            async ocrText(worker, canvas, {whitelist, psm}) {
-                await worker.setParameters({
-                    tessedit_pageseg_mode: psm ?? Tesseract.PSM.SINGLE_LINE,
-                    tessedit_char_whitelist: whitelist ?? ""
-                });
-                const { data } = await worker.recognize(canvas);
-                return (data && data.text ? data.text : "").trim();
-            },
+            async ocrDetailed(worker, canvas, {whitelist, psm, mode} = {}) {
+    if(canvas && canvas.__needsPreprocess) {
+        const m = mode || canvas.__needsPreprocess.mode || "text";
+        await this.preprocessForOcr(canvas, m);
+        delete canvas.__needsPreprocess;
+    }
+    await worker.setParameters({
+        tessedit_pageseg_mode: psm ?? Tesseract.PSM.SINGLE_LINE,
+        tessedit_char_whitelist: whitelist ?? ""
+    });
+    const { data } = await worker.recognize(canvas);
+    const text = (data && data.text ? data.text : "").trim();
+    const conf = (data && typeof data.confidence === "number") ? (data.confidence/100) : 0;
+    return { text, conf };
+},
+
+async ocrText(worker, canvas, {whitelist, psm, mode} = {}) {
+    const r = await this.ocrDetailed(worker, canvas, {whitelist, psm, mode});
+    return r.text;
+},
 
             parseDupe(txt) {
                 if(!txt) return 0;
@@ -1414,7 +1518,32 @@
                 return 1 - (dist / maxLen);
             },
 
-            detectSetFromNames(raw) {
+            async detectSetFromFooter(worker, baseCanvas) {
+    // Crop bottom center "Set X/24"
+    const w = baseCanvas.width, h = baseCanvas.height;
+    const rect = {
+        x: Math.floor(w * 0.30),
+        y: Math.floor(h * 0.86),
+        w: Math.floor(w * 0.40),
+        h: Math.floor(h * 0.08)
+    };
+    const c = this.cropCanvas(baseCanvas, rect, true, "digits");
+    const { text } = await this.ocrDetailed(worker, c, {
+        whitelist: "Set/0123456789",
+        psm: Tesseract.PSM.SINGLE_LINE,
+        mode: "digits"
+    });
+
+    const cleaned = text.replace(/\s+/g,' ').trim();
+    // Look for "Set 18/24" or "Set18/24"
+    const m = cleaned.match(/Set\s*([0-9]{1,2})\s*\/\s*24/i) || cleaned.match(/([0-9]{1,2})\s*\/\s*24/);
+    if(!m) return null;
+    const n = parseInt(m[1], 10);
+    if(!n || isNaN(n) || n < 1 || n > SET_DATA.length) return null;
+    return n;
+},
+
+detectSetFromNames(raw) {
                 // Score each set by how well OCR outputs match known sticker names
                 let best = { setNum: 1, score: -1 };
                 SET_DATA.forEach((set, idx) => {
@@ -1422,7 +1551,7 @@
                     let scoreSum = 0;
                     let used = 0;
                     raw.forEach(r => {
-                        const txt = r.nameRaw;
+                        const txt = (r.nameBannerRaw && r.nameBannerRaw.length >= (r.nameCenterRaw||"").length) ? r.nameBannerRaw : (r.nameCenterRaw||"");
                         if(!txt) return;
                         let bestMatch = 0;
                         set.cards.forEach(cardName => {
@@ -1443,12 +1572,17 @@
                 if(!set) throw new Error("Set not found for scan.");
                 const out = [];
                 raw.forEach((r, i) => {
-                    let best = { name: set.cards[0], conf: 0 };
-                    set.cards.forEach(cardName => {
-                        const s = this.similarity(r.nameRaw, cardName);
-                        if(s > best.conf) best = { name: cardName, conf: s };
-                    });
-                    const cardIdx = set.cards.indexOf(best.name);
+    let best = { name: set.cards[0], conf: 0, src: "banner" };
+
+    // Choose the better OCR candidate (banner vs center) by similarity score
+    set.cards.forEach(cardName => {
+        const sb = this.similarity(r.nameBannerRaw || "", cardName);
+        if(sb > best.conf) best = { name: cardName, conf: sb, src: "banner" };
+
+        const sc = this.similarity(r.nameCenterRaw || "", cardName);
+        if(sc > best.conf) best = { name: cardName, conf: sc, src: "center" };
+    });
+const cardIdx = set.cards.indexOf(best.name);
                     const id = `s${setNum}_${cardIdx}`;
                     out.push({ idx: r.idx, id, name: best.name, conf: best.conf, dupe: r.dupe, haveHint: r.haveHint, haveScore: r.haveScore, cellThumb: r.cellThumb });
                 });

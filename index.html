@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Monopoly Go! Posh Pets</title>
+    <title>Monopoly Go! Wizard Suite</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Pacifico&display=swap');
@@ -459,9 +459,62 @@
 .theme-neon #view-gameroom .game-card { box-shadow: 0 0 22px rgba(125,249,255,0.20), 0 16px 50px rgba(0,0,0,0.45); }
 .theme-neon #view-gameroom .game-pill { border-color: rgba(125,249,255,0.35); box-shadow: 0 0 14px rgba(125,249,255,0.14); }
 
-</style>
+
+
+        /* --- Mobile-friendly drawers for side navs --- */
+        #drawer-backdrop{
+            position:fixed; inset:0; background:rgba(0,0,0,0.45);
+            z-index: 99; display:none;
+        }
+        .drawer-btn{
+            position:fixed; top:12px; width:44px; height:44px;
+            border:none; border-radius:12px;
+            background:rgba(255,255,255,0.92);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+            z-index: 101;
+            display:none; /* desktop default */
+            font-size:20px; font-weight:900;
+        }
+        .drawer-btn.left{ left:12px; }
+        .drawer-btn.right{ right:12px; background:rgba(26,26,26,0.92); color:white; }
+
+        @media (max-width: 820px), (hover: none) {
+            body{ padding: 10px 10px 10px 10px; }
+
+            /* Turn sidebars into off-canvas drawers */
+            .sidebar, .right-sidebar{
+                top:0; bottom:0;
+                border-radius: 0;
+                width: min(82vw, 320px);
+                transition: transform 0.22s ease;
+            }
+            .sidebar{
+                transform: translateX(-102%);
+            }
+            .right-sidebar{
+                transform: translateX(102%);
+            }
+            .sidebar:hover{ width: min(82vw, 320px); }      /* disable hover-expand weirdness */
+            .right-sidebar:hover{ width: min(82vw, 320px); }/* disable hover-expand weirdness */
+
+            .sidebar.open{ transform: translateX(0); }
+            .right-sidebar.open{ transform: translateX(0); }
+
+            /* show the floating open buttons on mobile */
+            .drawer-btn{ display:block; }
+
+            /* keep content full-width (no need to “make room” for sidebars) */
+            .main-container, .planner-container { margin-left: 0; margin-right: 0; }
+        }
+
+    </style>
 </head>
 <body>
+
+    <div id="drawer-backdrop" aria-hidden="true"></div>
+    <button id="open-left-drawer" class="drawer-btn left" aria-label="Open menu">☰</button>
+    <button id="open-right-drawer" class="drawer-btn right" aria-label="Open navigation">≡</button>
+
     <div id="notification-area"></div>
 
     <div class="header-container">
@@ -5904,7 +5957,7 @@ const Importer = {
         const Backup = {
             download() {
                 const payload = {
-                    app: "Monopoly Go! Posh Pets",
+                    app: "Monopoly Go! Wizard Suite",
                     version: 2,
                     exportedAt: new Date().toISOString(),
                     state: Manager.state
@@ -6753,6 +6806,96 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (g && g.classList.contains('active')) GameRoom.render();
             }
         });
+
+    
+
+        // --- Mobile drawers: make side navs usable on touch screens ---
+        (function(){
+            const left = document.querySelector('.sidebar');
+            const right = document.querySelector('.right-sidebar');
+            const backdrop = document.getElementById('drawer-backdrop');
+            const btnL = document.getElementById('open-left-drawer');
+            const btnR = document.getElementById('open-right-drawer');
+
+            function anyOpen(){ return (left && left.classList.contains('open')) || (right && right.classList.contains('open')); }
+
+            function closeDrawers(){
+                left && left.classList.remove('open');
+                right && right.classList.remove('open');
+                if (backdrop) backdrop.style.display = 'none';
+            }
+            function openLeft(){
+                if (!left) return;
+                right && right.classList.remove('open');
+                left.classList.add('open');
+                if (backdrop) backdrop.style.display = 'block';
+            }
+            function openRight(){
+                if (!right) return;
+                left && left.classList.remove('open');
+                right.classList.add('open');
+                if (backdrop) backdrop.style.display = 'block';
+            }
+            function toggleLeft(){
+                if (!left) return;
+                const willOpen = !left.classList.contains('open');
+                closeDrawers();
+                if (willOpen) openLeft();
+            }
+            function toggleRight(){
+                if (!right) return;
+                const willOpen = !right.classList.contains('open');
+                closeDrawers();
+                if (willOpen) openRight();
+            }
+
+            // Buttons + backdrop
+            btnL && btnL.addEventListener('click', (e)=>{ e.stopPropagation(); toggleLeft(); });
+            btnR && btnR.addEventListener('click', (e)=>{ e.stopPropagation(); toggleRight(); });
+            backdrop && backdrop.addEventListener('click', closeDrawers);
+
+            // Close drawers when you tap anywhere in the app content
+            document.addEventListener('click', (e)=>{
+                if (!anyOpen()) return;
+                const t = e.target;
+                if ((left && left.contains(t)) || (right && right.contains(t)) || (btnL && btnL.contains(t)) || (btnR && btnR.contains(t))) return;
+                closeDrawers();
+            }, true);
+
+            // If you navigate via the right sidebar, auto-close (mobile UX)
+            right && right.addEventListener('click', (e)=>{
+                const item = e.target.closest('.right-nav-item');
+                if (item) closeDrawers();
+            });
+
+            // Swipe gesture: edge swipe opens, swipe away closes (lightweight)
+            let startX = null, startY = null, tracking = false;
+            document.addEventListener('touchstart', (e)=>{
+                if (!e.touches || e.touches.length !== 1) return;
+                const t = e.touches[0];
+                startX = t.clientX; startY = t.clientY; tracking = true;
+            }, {passive:true});
+
+            document.addEventListener('touchmove', (e)=>{
+                if (!tracking || startX === null) return;
+                const t = e.touches[0];
+                const dx = t.clientX - startX;
+                const dy = t.clientY - startY;
+                if (Math.abs(dy) > 40) return; // ignore mostly-vertical gestures
+
+                const w = window.innerWidth || 0;
+
+                // Edge swipe to open
+                if (startX < 18 && dx > 40) { openLeft(); tracking = false; }
+                if (startX > w - 18 && dx < -40) { openRight(); tracking = false; }
+
+                // Swipe away to close
+                if (left && left.classList.contains('open') && dx < -50) { closeDrawers(); tracking = false; }
+                if (right && right.classList.contains('open') && dx > 50) { closeDrawers(); tracking = false; }
+            }, {passive:true});
+
+            document.addEventListener('touchend', ()=>{ tracking=false; startX=null; startY=null; }, {passive:true});
+        })();
 
     </script>
 </body>

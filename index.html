@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Monopoly Go! Posh Pets Album</title>
+    <title>Monopoly Go! Wizard Suite</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Pacifico&display=swap');
@@ -4124,19 +4124,44 @@ populateSelectors() {
                 return `<li><strong>${this.esc(this.acctLabel(dk))}</strong>: ${parts.join(' + ')}</li>`;
             }).join('');
 
+        // Capacity snapshot (per account) — helps verify we are NOT using a shared/global pool
+        const maxReg = (Trade.mode === 'fest') ? 10 : 5;
+        const maxGold = (Trade.mode === 'blitz') ? 2 : 0;
+        const totalRegAvail = keys.reduce((sum,k)=> sum + (caps0[k]?.reg || 0), 0);
+        const totalGoldAvail = keys.reduce((sum,k)=> sum + (caps0[k]?.gold || 0), 0);
+
+        const capLines = keys.slice()
+            .sort((a,b) => this.acctLabel(a).localeCompare(this.acctLabel(b)))
+            .map(k => {
+                const r = caps0[k]?.reg ?? 0;
+                const g = caps0[k]?.gold ?? 0;
+                const goldPart = maxGold ? ` • ${g} gold left` : '';
+                return `<li><strong>${this.esc(this.acctLabel(k))}</strong>: ${r} reg left${goldPart}</li>`;
+            }).join('');
+
         let html = '';
+        html += this.renderCard({
+            title: `Send capacity snapshot (per account)` ,
+            subtitle: `Each account tracks its own sends (regular: up to ${maxReg}/day${maxGold ? `, gold: up to ${maxGold}/day` : ''}). Total available right now: ${totalRegAvail} reg${maxGold ? ` + ${totalGoldAvail} gold` : ''}.`,
+            tags: [
+                { text: `NOT shared pool`, kind:'good' },
+                { text: `mode: ${Trade.mode}`, kind:'info' }
+            ],
+            bodyHtml: capLines ? `<ul class="smart-list">${capLines}</ul>` : ''
+        });
+
         html += this.renderCard({
             title: `Community Success Plan` ,
             subtitle: `Goal: get as many accounts as possible to close ≥ 1 set (respects sends + dupes).`,
             tags: [
                 { text: `${best.count}/${targets.length} accounts`, kind: best.count === targets.length ? 'good' : 'info' },
-                { text: `${best.sends} send(s)`, kind:'info' },
+                { text: `Total plan sends: ${best.sends}`, kind:'info' },
                 { text: `mode: ${Trade.mode}`, kind:'info' }
             ],
-            bodyHtml: usageLines ? `<div class="smart-mini" style="margin-top:10px;">Donor send usage:</div><ul class="smart-list">${usageLines}</ul>` : ''
+            bodyHtml: usageLines ? `<div class="smart-mini" style="margin-top:10px;">Donor send usage (plan uses / currently left):</div><ul class="smart-list">${usageLines}</ul>` : ''
         });
 
-        // Beneficiary cards
+// Beneficiary cards
         best.plan.forEach(p => {
             const tags = [
                 { text: `Beneficiary: ${this.acctLabel(p.benefKey)}`, kind:'info' },

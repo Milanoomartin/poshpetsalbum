@@ -901,6 +901,7 @@
                 <option value="fair_1for1">Fair: 1 sticker ↔ 1 sticker (same ★)</option>
                 <option value="fair_stars">Fair: equal ★ totals (multi-sticker)</option>
                 <option value="community_close">Community Effort: close someone’s set</option>
+                <option value="community_success">Community Success: close ≥ 1 set for everyone</option>
                 <option value="focus_close">Focus: prioritize closing sets for…</option>
                 <option value="star_chaser">Star Chaser: push an account to a vault</option>
                 <option value="multi_global">Multi-Account View: maximize set rewards (global)</option>
@@ -998,31 +999,31 @@
     <script>
         // --- 1. DATA DEFINITIONS (Based on provided HTML) ---
         const SET_DATA = [
-             { id: '1', name: 'Community Gallery', color: 'hsl(8, 70%, 80%)', reward: 'Cash, 150 Rolls', cards: ['Kiara','David Froggy','Buddy','Lucky','Bryan','Smokey','Stella','Roo','Rum'] },
-             { id: '2', name: 'Elegant Essentials', color: 'hsl(338, 70%, 80%)', reward: 'Cash, 175 Rolls', cards: ['Carrot Cushion','Fancy Perch','Cuckoo-zy','Regal Adornment','Gilded Run','Opulent Oasis','Royal Nibbles','Coral Couture','Luxe Ribbon'] },
-             { id: '3', name: 'Pet Lookalikes', color: 'hsl(91, 70%, 80%)', reward: 'Cash, 200 Rolls', cards: ['Shellmates','Beauty Buddies','Carrot Companions','Feathered Twins','Spotting Companion','Pigtail Pals','Zen Buds','Birds of a Feather','Dapper Duo'] },
-             { id: '4', name: 'Duke\'s Spa Day', color: 'hsl(132, 70%, 80%)', reward: 'Cash, 225 Rolls', cards: ['Spa Time','Head Massage','Nail File','Relaxin\'','Serene Bath','Paw-Made','Makin Biscuits','Blown Away','Pampered Pet'] },
-             { id: '5', name: 'Posh Neighborhood', color: 'hsl(115, 70%, 80%)', reward: 'Cash, 250 Rolls', cards: ['Dog House','Cat Tree','Hamster Habitat','Turtle Town','Bird Paradise','Rabbit Hutch','Rodent Retreat','Lizard Lounge','Guinea Pig Villa'] },
-             { id: '6', name: 'Meowny Talks', color: 'hsl(313, 70%, 80%)', reward: 'Cash, 275 Rolls', cards: ['Water Cooler','Capital Gains','Cord Catastrophe','Key Crusher','Roll Wrecker','Cat of the Month','Scratching Deadlines','Board Meeting','The Boss'] },
-             { id: '7', name: 'Aquarium Life', color: 'hsl(8, 70%, 80%)', reward: 'Cash, 300 Rolls', cards: ['Pearls Galore','Neon Ballroom','Betta Beauty','Ahoy Treasure','Lavish Koi','Water Works','Shell Spa','Algae Art','Castle Dreams'] },
-             { id: '8', name: 'Pet City', color: 'hsl(273, 70%, 80%)', reward: 'Cash, 325 Rolls', cards: ['City Gates','High Pawrk','Lap of Luxury','Bird\'s Eye View','Mayor Hopscotch','Gold Leash District','Paw Plaza','Tail Wag Tunnel','Skyline Soirée'] },
-             { id: '9', name: 'Cold-Blooded Billionaire', color: 'hsl(83, 70%, 80%)', reward: 'Cash, 350 Rolls', cards: ['Sly Snake','Pond Penthouse','Prestigious Iguana','Serene Turtle','Lounge Ledge','Crystal Axolotl','Leap of Luxury','Tortoise Domain','Lizard Vault'] },
-             { id: '10', name: 'Hamster Trail', color: 'hsl(56, 70%, 80%)', reward: 'Cash, 375 Rolls, Hamster Emote', cards: ['Tube Traffic','Cash Grab','High Roller','Jet Joy','Luxury Love','Nap Nook','Ring Leader','Squeak Squad','Property Protector'] },
-             { id: '11', name: 'Posh Plushies', color: 'hsl(286, 70%, 80%)', reward: 'Cash, 400 Rolls', cards: ['Artist Hazel','Sled Dog','Miss Priss','Pink Poodle','Dapper Duke','Bride & Groom','Tycoon Bear','Desert Tortoise','Sleepy Scottie'] },
-             { id: '12', name: 'Beauty Salon', color: 'hsl(31, 70%, 80%)', reward: 'Cash, 425 Rolls', cards: ['Suds & Sparkle','Rollers','Salon Bliss','Blowout Bar','Shell Shine','Dyed to be Wild','Golden Groom','Paw-dicure','Looking Fresh'] },
-             { id: '13', name: 'Mach Paws', color: 'hsl(337, 70%, 80%)', reward: 'Cash, 450 Rolls, Cat Emote', cards: ['Go-Kitty','Passenger Princess','In the Wind','Slow Ride','Sidecar Sidekick','Hamster Wheels','Reptilian Roadster','Coupe Hopper','Zoomie Mobile'] },
-             { id: '14', name: 'Pet Dreams', color: 'hsl(281, 70%, 80%)', reward: 'Cash, 500 Rolls', cards: ['Fish Wish','Mani Pedi','Snack Shower','Treatnado','Mirror Mirror','Cheese Wiz','Great Scott!','Laser Quest','Princess Priss'] },
-             { id: '15', name: 'Rock Stars', color: 'hsl(284, 70%, 80%)', reward: 'Cash, 550 Rolls', cards: ['Rock Cat','Soundbooth Perch','Punk\'d Out','Tour Ready','Bulldog Blues','Fishy Tunes','Vinyl Drop','Metal Mood','Backstage Glow'] },
-             { id: '16', name: 'Party Style', color: 'hsl(257, 70%, 80%)', reward: 'Cash, 600 Rolls', cards: ['Bandana','Cowboy Hat','Party Hat','Neck Tie','Witch Hat','Pirate Hat','Sunglasses','Fairy Wings','Skateboard'] },
-             { id: '17', name: 'Cute Style', color: 'hsl(140, 70%, 80%)', reward: 'Cash, 650 Rolls', cards: ['Neck ribbon','Scarf','Bow','Cap','Headphones','Heart Glasses','Beanie','Bee wings','Flower cushion'] },
-             { id: '18', name: 'Ritzy Style', color: 'hsl(198, 70%, 80%)', reward: 'Cash, 700 Rolls', cards: ['Captain Hat','Feathered Hat','Tophat','Tiara','M collar','Pearl Collar','King\'s Cape','Money Pile','King\'s Crown'] },
-             { id: '19', name: 'Haute Dog', color: 'hsl(177, 70%, 80%)', reward: 'Cash, 800 Rolls', cards: ['Cover Shot','Sketches','Cavy Couture','Tulle Bunny','In Dogue','Catwalk','Loud Look','Showstopper','Poised Pawsy'] },
-             { id: '20', name: 'Hello Kitty & Friends', color: 'hsl(130, 70%, 80%)', reward: 'Cash, 900 Rolls, Hello Kitty Shield', cards: ['Hello Kitty','Cinnamoroll','Chococat','Pochacco','Kuromi & My Melody','Pompompurin','Keroppi','Picnic Friends','Beach Day'] },
-             { id: '21', name: 'Celebrity Pets', color: 'hsl(169, 70%, 80%)', reward: 'Cash, 1,000 Rolls', cards: ['Woke Up Like This','Pup-parazzi','Fit Check','On Set','Talk Show','Chauffeured','Pawtograph','Tabloids','Wall of Fame'] },
-             { id: '22', name: 'Victorian Romance', color: 'hsl(56, 70%, 80%)', reward: 'Cash, 1,300 Rolls', cards: ['Made in the Shade','Pondside Reverie','Tortoise Trot','Tea Tease','Afternoon Nibbles','Font of Wealth','Swan Swoon','River Serenade','Croak-et'] },
-             { id: '23', name: 'Trustfund Furballs', color: 'hsl(340, 70%, 80%)', reward: 'Cash, 1,600 Rolls, Frisbee Scotty Shield', cards: ['Uptown Pup','Golden Yarn','Sunroom Sanctuary','Spoon Fed','Topiary','Portrait Walk','Penthouse Views','Pillow Peak','Duke\'s Throne'] },
-             { id: '24', name: 'Red Carpet', color: 'hsl(253, 70%, 80%)', reward: 'Cash, 1,800 Rolls', cards: ['Glam Squad','Carpet Craze','Ruff Rivalry','Best Dressed','Spotlight Pup','Who is it?','Bow Tie Moment','Hardly Judging','Best in Show'] },
-             { id: '25', name: 'Luxury Style Prestige', color: 'hsl(5, 70%, 80%)', reward: 'Cash, 2,000 Rolls', cards: ['Water Bowl','Dog Bed','Tennis Ball','Grooming Set','Carrier','Jeweled Collar','Golden Bow','Golden Tophat','Golden Skateboard'] },
+             { id: '1', name: 'Community Gallery', color: '#86BCEB', reward: 'Cash, 150 Rolls', cards: ['Kiara','David Froggy','Buddy','Lucky','Bryan','Smokey','Stella','Roo','Rum'] },
+             { id: '2', name: 'Elegant Essentials', color: '#F1B3B8', reward: 'Cash, 175 Rolls', cards: ['Carrot Cushion','Fancy Perch','Cuckoo-zy','Regal Adornment','Gilded Run','Opulent Oasis','Royal Nibbles','Coral Couture','Luxe Ribbon'] },
+             { id: '3', name: 'Pet Lookalikes', color: '#BCE48D', reward: 'Cash, 200 Rolls', cards: ['Shellmates','Beauty Buddies','Carrot Companions','Feathered Twins','Spotting Companion','Pigtail Pals','Zen Buds','Birds of a Feather','Dapper Duo'] },
+             { id: '4', name: 'Duke\'s Spa Day', color: '#9FE2D6', reward: 'Cash, 225 Rolls', cards: ['Spa Time','Head Massage','Nail File','Relaxin\'','Serene Bath','Paw-Made','Makin Biscuits','Blown Away','Pampered Pet'] },
+             { id: '5', name: 'Posh Neighborhood', color: '#BFD7D9', reward: 'Cash, 250 Rolls', cards: ['Dog House','Cat Tree','Hamster Habitat','Turtle Town','Bird Paradise','Rabbit Hutch','Rodent Retreat','Lizard Lounge','Guinea Pig Villa'] },
+             { id: '6', name: 'Meowny Talks', color: '#B7E3A2', reward: 'Cash, 275 Rolls', cards: ['Water Cooler','Capital Gains','Cord Catastrophe','Key Crusher','Roll Wrecker','Cat of the Month','Scratching Deadlines','Board Meeting','The Boss'] },
+             { id: '7', name: 'Aquarium Life', color: '#8DE1E3', reward: 'Cash, 300 Rolls', cards: ['Pearls Galore','Neon Ballroom','Betta Beauty','Ahoy Treasure','Lavish Koi','Water Works','Shell Spa','Algae Art','Castle Dreams'] },
+             { id: '8', name: 'Pet City', color: '#F1D181', reward: 'Cash, 325 Rolls', cards: ['City Gates','High Pawrk','Lap of Luxury','Bird\'s Eye View','Mayor Hopscotch','Gold Leash District','Paw Plaza','Tail Wag Tunnel','Skyline Soirée'] },
+             { id: '9', name: 'Cold-Blooded Billionaire', color: '#E5CF9B', reward: 'Cash, 350 Rolls', cards: ['Sly Snake','Pond Penthouse','Prestigious Iguana','Serene Turtle','Lounge Ledge','Crystal Axolotl','Leap of Luxury','Tortoise Domain','Lizard Vault'] },
+             { id: '10', name: 'Hamster Trail', color: '#9BC6E9', reward: 'Cash, 375 Rolls, Hamster Emote', cards: ['Tube Traffic','Cash Grab','High Roller','Jet Joy','Luxury Love','Nap Nook','Ring Leader','Squeak Squad','Property Protector'] },
+             { id: '11', name: 'Posh Plushies', color: '#F3B6C7', reward: 'Cash, 400 Rolls', cards: ['Artist Hazel','Sled Dog','Miss Priss','Pink Poodle','Dapper Duke','Bride & Groom','Tycoon Bear','Desert Tortoise','Sleepy Scottie'] },
+             { id: '12', name: 'Beauty Salon', color: '#E3C07E', reward: 'Cash, 425 Rolls', cards: ['Suds & Sparkle','Rollers','Salon Bliss','Blowout Bar','Shell Shine','Dyed to be Wild','Golden Groom','Paw-dicure','Looking Fresh'] },
+             { id: '13', name: 'Mach Paws', color: '#D6B0F0', reward: 'Cash, 450 Rolls, Cat Emote', cards: ['Go-Kitty','Passenger Princess','In the Wind','Slow Ride','Sidecar Sidekick','Hamster Wheels','Reptilian Roadster','Coupe Hopper','Zoomie Mobile'] },
+             { id: '14', name: 'Pet Dreams', color: '#E7C07A', reward: 'Cash, 500 Rolls', cards: ['Fish Wish','Mani Pedi','Snack Shower','Treatnado','Mirror Mirror','Cheese Wiz','Great Scott!','Laser Quest','Princess Priss'] },
+             { id: '15', name: 'Rock Stars', color: '#F2B7D9', reward: 'Cash, 550 Rolls', cards: ['Rock Cat','Soundbooth Perch','Punk\'d Out','Tour Ready','Bulldog Blues','Fishy Tunes','Vinyl Drop','Metal Mood','Backstage Glow'] },
+             { id: '16', name: 'Party Style', color: '#F0B28E', reward: 'Cash, 600 Rolls', cards: ['Bandana','Cowboy Hat','Party Hat','Neck Tie','Witch Hat','Pirate Hat','Sunglasses','Fairy Wings','Skateboard'] },
+             { id: '17', name: 'Cute Style', color: '#9FE0DA', reward: 'Cash, 650 Rolls', cards: ['Neck ribbon','Scarf','Bow','Cap','Headphones','Heart Glasses','Beanie','Bee wings','Flower cushion'] },
+             { id: '18', name: 'Ritzy Style', color: '#C8B2F0', reward: 'Cash, 700 Rolls', cards: ['Captain Hat','Feathered Hat','Tophat','Tiara','M collar','Pearl Collar','King\'s Cape','Money Pile','King\'s Crown'] },
+             { id: '19', name: 'Haute Dog', color: '#D1C3F2', reward: 'Cash, 800 Rolls', cards: ['Cover Shot','Sketches','Cavy Couture','Tulle Bunny','In Dogue','Catwalk','Loud Look','Showstopper','Poised Pawsy'] },
+             { id: '20', name: 'Hello Kitty & Friends', color: '#F3B6C7', reward: 'Cash, 900 Rolls, Hello Kitty Shield', cards: ['Hello Kitty','Cinnamoroll','Chococat','Pochacco','Kuromi & My Melody','Pompompurin','Keroppi','Picnic Friends','Beach Day'] },
+             { id: '21', name: 'Celebrity Pets', color: '#F0C0A6', reward: 'Cash, 1,000 Rolls', cards: ['Woke Up Like This','Pup-parazzi','Fit Check','On Set','Talk Show','Chauffeured','Pawtograph','Tabloids','Wall of Fame'] },
+             { id: '22', name: 'Victorian Romance', color: '#E8B2DA', reward: 'Cash, 1,300 Rolls', cards: ['Made in the Shade','Pondside Reverie','Tortoise Trot','Tea Tease','Afternoon Nibbles','Font of Wealth','Swan Swoon','River Serenade','Croak-et'] },
+             { id: '23', name: 'Trustfund Furballs', color: '#B169C9', reward: 'Cash, 1,600 Rolls, Frisbee Scotty Shield', cards: ['Uptown Pup','Golden Yarn','Sunroom Sanctuary','Spoon Fed','Topiary','Portrait Walk','Penthouse Views','Pillow Peak','Duke\'s Throne'] },
+             { id: '24', name: 'Red Carpet', color: '#B4A3E9', reward: 'Cash, 1,800 Rolls', cards: ['Glam Squad','Carpet Craze','Ruff Rivalry','Best Dressed','Spotlight Pup','Who is it?','Bow Tie Moment','Hardly Judging','Best in Show'] },
+             { id: '25', name: 'Luxury Style Prestige', color: '#F59AC6', reward: 'Cash, 2,000 Rolls', cards: ['Water Bowl','Dog Bed','Tennis Ball','Grooming Set','Carrier','Jeweled Collar','Golden Bow','Golden Tophat','Golden Skateboard'] },
         ];
 
         // Hardcoded metadata for stars/gold based on original visual cues (Gold cards have explicit CSS class in original)
@@ -3303,8 +3304,8 @@ populateSelectors() {
         const mode = this.modeEl.value;
 
         const needsPartner = (mode === 'direct_out' || mode === 'direct_2way' || mode === 'fair_1for1' || mode === 'fair_stars');
-        const needsFocus = (mode === 'community_close' || mode === 'focus_close' || mode === 'star_chaser' || mode === 'multi_global');
-        const needsRewardStrategy = (mode === 'community_close' || mode === 'focus_close' || mode === 'multi_global');
+        const needsFocus = (mode === 'community_close' || mode === 'community_success' || mode === 'focus_close' || mode === 'star_chaser' || mode === 'multi_global');
+        const needsRewardStrategy = (mode === 'community_close' || mode === 'community_success' || mode === 'focus_close' || mode === 'multi_global');
         const needsVault = (mode === 'star_chaser');
 
         this.partnerEl.style.display = needsPartner ? '' : 'none';
@@ -3786,6 +3787,389 @@ populateSelectors() {
                 variant: plan.fullyCoverable ? '' : 'warn'
             });
         });
+
+        this.outEl.innerHTML = html;
+    },
+
+    // --- Community Success (group closes) ---
+    // Goal: allocate community dupes (respecting send limits + dupe counts) to help as many accounts as possible
+    // complete at least ONE set. Prioritizes "everyone gets 1 set" when feasible.
+    modeCommunitySuccess() {
+        const focus = this.focusEl ? this.focusEl.value : '__all__';
+        const term = (this.searchEl ? this.searchEl.value.trim().toLowerCase() : '');
+
+        const keys = Object.keys(Manager.state.accounts || {});
+        if (keys.length < 2) {
+            this.outEl.innerHTML = this.renderCard({
+                title: "Community Success needs at least 2 accounts",
+                subtitle: "Add another account and the plan gets much more powerful ⚡",
+                variant: "warn"
+            });
+            return;
+        }
+
+        const targets = (focus && focus !== '__all__') ? [focus] : keys;
+
+        // Snapshot send limits (do NOT mutate originals)
+        const caps0 = {};
+        keys.forEach(k => {
+            caps0[k] = { reg: this.getSendsLeft(k), gold: this.getGoldSendsLeft(k) };
+        });
+
+        // Build candidate set-close options per beneficiary (keep it small + high-signal)
+        const buildOptionsFor = (benefKey, maxMissing = 3) => {
+            const benef = Manager.state.accounts[benefKey];
+            if (!benef || !benef.data) return [];
+
+            const opts = [];
+            for (let s = 1; s <= SET_DATA.length; s++) {
+                if (s === 25 && !benef.prestige) continue;
+                const set = SET_DATA[s - 1];
+                if (!set) continue;
+
+                const missing = [];
+                for (let cIdx = 0; cIdx < set.cards.length; cIdx++) {
+                    const id = `s${s}_${cIdx}`;
+                    if ((benef.data[id] || 0) === 0) missing.push({ id, name: set.cards[cIdx] });
+                }
+                if (!missing.length || missing.length > maxMissing) continue;
+
+                if (term && !missing.some(m => String(m.name || '').toLowerCase().includes(term))) continue;
+
+                // Each missing sticker must be tradable now AND have at least one donor with a dupe.
+                const miss = [];
+                let ok = true;
+                let needsGold = false;
+
+                for (const m of missing) {
+                    const meta = Manager.cardDb[m.id];
+                    if (!meta) { ok = false; break; }
+                    if (!this.isCardEnabledForAccount(benefKey, meta)) { ok = false; break; }
+
+                    const tr = this.tradability(meta);
+                    if (!tr || !tr.tradable) { ok = false; break; }
+                    if (meta.gold) needsGold = true;
+
+                    const donors = [];
+                    keys.forEach(dk => {
+                        if (dk === benefKey) return;
+                        if (!this.isCardEnabledForAccount(dk, meta)) return;
+                        const cnt = this.getCount(dk, m.id);
+                        if (cnt > 1) donors.push({ donor: dk, dupes: cnt - 1 });
+                    });
+
+                    donors.sort((a,b) => (b.dupes - a.dupes) || this.acctLabel(a.donor).localeCompare(this.acctLabel(b.donor)));
+                    if (!donors.length) { ok = false; break; }
+
+                    miss.push({ id: m.id, name: m.name, meta, donors });
+                }
+
+                if (!ok) continue;
+
+                opts.push({
+                    benefKey,
+                    setNum: s,
+                    setName: set.name,
+                    setReward: set.reward || '',
+                    missing: miss,
+                    missingCount: miss.length,
+                    rewardV: this.rewardValueForSet(s),
+                    needsGold
+                });
+            }
+
+            // Prefer fewer sends, then higher reward value
+            opts.sort((a,b) => (a.missingCount - b.missingCount) || (b.rewardV - a.rewardV));
+            return opts.slice(0, 8);
+        };
+
+        const optsByAcct = {};
+        targets.forEach(tk => {
+            // Start strict (<=2 missing); if none, allow <=3
+            let opts = buildOptionsFor(tk, 2);
+            if (!opts.length) opts = buildOptionsFor(tk, 3);
+            optsByAcct[tk] = opts;
+        });
+
+        // Order accounts: hard ones first (fewer options), then by smallest missing count
+        const ordered = targets.slice().sort((a,b) => {
+            const A = optsByAcct[a] || [];
+            const B = optsByAcct[b] || [];
+            const la = A.length || 999;
+            const lb = B.length || 999;
+            if (la !== lb) return la - lb;
+            const ma = A[0] ? A[0].missingCount : 999;
+            const mb = B[0] ? B[0].missingCount : 999;
+            return ma - mb;
+        });
+
+        // Mutable state for search
+        const caps = {};
+        keys.forEach(k => { caps[k] = { reg: caps0[k].reg, gold: caps0[k].gold }; });
+        const used = {}; // donor|id -> count used (for dupe constraints)
+
+        const canUseDupe = (donorKey, id) => {
+            const have = this.getCount(donorKey, id);
+            const usedK = `${donorKey}|${id}`;
+            const already = used[usedK] || 0;
+            return (have - 1 - already) > 0;
+        };
+
+        const applyItems = (items) => {
+            items.forEach(it => {
+                const donor = it.donor;
+                const capType = (it.meta && it.meta.gold) ? 'gold' : 'reg';
+                caps[donor][capType] = Math.max(0, (caps[donor][capType] || 0) - 1);
+                const usedK = `${donor}|${it.id}`;
+                used[usedK] = (used[usedK] || 0) + 1;
+            });
+        };
+
+        const undoItems = (items) => {
+            items.forEach(it => {
+                const donor = it.donor;
+                const capType = (it.meta && it.meta.gold) ? 'gold' : 'reg';
+                caps[donor][capType] = (caps[donor][capType] || 0) + 1;
+                const usedK = `${donor}|${it.id}`;
+                used[usedK] = Math.max(0, (used[usedK] || 0) - 1);
+                if (used[usedK] === 0) delete used[usedK];
+            });
+        };
+
+        // Find a feasible donor assignment for ONE option under current caps/dupe usage.
+        const bestAssignmentFor = (opt) => {
+            const miss = opt.missing || [];
+            if (!miss.length) return null;
+
+            // Cap the branching (top donors per sticker)
+            const donorLists = miss.map(m => {
+                const capType = (m.meta && m.meta.gold) ? 'gold' : 'reg';
+                return (m.donors || [])
+                    .filter(d => (caps[d.donor] && (caps[d.donor][capType] || 0) > 0) && canUseDupe(d.donor, m.id))
+                    .slice(0, 6);
+            });
+
+            if (donorLists.some(l => !l.length)) return null;
+
+            let best = null;
+            let bestScore = -Infinity;
+
+            const localUsed = {}; // donor|id -> count within this option
+            const usage = {};     // donor -> {reg,gold}
+
+            const rec = (idx, items) => {
+                if (idx >= miss.length) {
+                    // score: prefer spreading load + using donors with more remaining sends
+                    const donors = Object.keys(usage);
+                    let penalty = 0;
+                    donors.forEach(dk => {
+                        const u = usage[dk] || { reg:0, gold:0 };
+                        const r = (caps[dk]?.reg || 0);
+                        const g = (caps[dk]?.gold || 0);
+                        if (u.reg) penalty += (u.reg / Math.max(0.25, r));
+                        if (u.gold) penalty += (u.gold / Math.max(0.25, g));
+                    });
+                    const score = (donors.length * 0.35) - penalty;
+                    if (score > bestScore) {
+                        bestScore = score;
+                        best = items.slice();
+                    }
+                    return;
+                }
+
+                const m = miss[idx];
+                const capType = (m.meta && m.meta.gold) ? 'gold' : 'reg';
+                const list = donorLists[idx];
+
+                for (let j = 0; j < list.length; j++) {
+                    const dk = list[j].donor;
+                    // capacity check
+                    if (!caps[dk] || (caps[dk][capType] || 0) <= 0) continue;
+
+                    // dupe check (global + local)
+                    const k = `${dk}|${m.id}`;
+                    const have = this.getCount(dk, m.id);
+                    const already = (used[k] || 0) + (localUsed[k] || 0);
+                    if ((have - 1 - already) <= 0) continue;
+
+                    // apply locally
+                    localUsed[k] = (localUsed[k] || 0) + 1;
+                    if (!usage[dk]) usage[dk] = { reg:0, gold:0 };
+                    usage[dk][capType] += 1;
+                    if (usage[dk][capType] > (caps[dk][capType] || 0)) {
+                        // rollback
+                        usage[dk][capType] -= 1;
+                        localUsed[k] -= 1;
+                        if (localUsed[k] === 0) delete localUsed[k];
+                        continue;
+                    }
+
+                    items.push({
+                        donor: dk,
+                        id: m.id,
+                        name: m.name,
+                        meta: m.meta
+                    });
+
+                    rec(idx + 1, items);
+
+                    items.pop();
+                    usage[dk][capType] -= 1;
+                    if (usage[dk].reg === 0 && usage[dk].gold === 0) delete usage[dk];
+                    localUsed[k] -= 1;
+                    if (localUsed[k] === 0) delete localUsed[k];
+                }
+            };
+
+            rec(0, []);
+            return best ? { items: best, missingCount: miss.length } : null;
+        };
+
+        let best = { count: -1, reward: -1, sends: 999999, plan: [] };
+        const working = [];
+
+        const dfs = (i, count, reward, sends) => {
+            if (i >= ordered.length) {
+                if (
+                    count > best.count ||
+                    (count === best.count && reward > best.reward) ||
+                    (count === best.count && reward === best.reward && sends < best.sends)
+                ) {
+                    best = {
+                        count,
+                        reward,
+                        sends,
+                        plan: working.map(p => ({
+                            benefKey: p.benefKey,
+                            setNum: p.setNum,
+                            setName: p.setName,
+                            setReward: p.setReward,
+                            missingCount: p.missingCount,
+                            items: p.items.map(it => ({ ...it }))
+                        }))
+                    };
+                }
+                return;
+            }
+
+            // prune if we can't beat the best
+            const remaining = ordered.length - i;
+            if (count + remaining < best.count) return;
+
+            const acctKey = ordered[i];
+            const options = optsByAcct[acctKey] || [];
+
+            // Try satisfying this account (best options first)
+            for (let oi = 0; oi < options.length; oi++) {
+                const opt = options[oi];
+                const assn = bestAssignmentFor(opt);
+                if (!assn) continue;
+
+                applyItems(assn.items);
+                working.push({
+                    benefKey: opt.benefKey,
+                    setNum: opt.setNum,
+                    setName: opt.setName,
+                    setReward: opt.setReward,
+                    missingCount: assn.missingCount,
+                    items: assn.items
+                });
+
+                dfs(i + 1, count + 1, reward + (opt.rewardV || 0), sends + assn.items.length);
+
+                working.pop();
+                undoItems(assn.items);
+
+                // If we already achieved perfect coverage, no need to explore further
+                if (best.count === ordered.length) break;
+            }
+
+            // Or skip this account
+            dfs(i + 1, count, reward, sends);
+        };
+
+        dfs(0, 0, 0, 0);
+
+        if (!best.plan.length) {
+            this.outEl.innerHTML = this.renderCard({
+                title: "No group-close plan found in current limits",
+                subtitle: "Try Trade Fest (10 sends), switch focus, or remove search filter — the math is being grumpy 🤖",
+                variant: "warn"
+            });
+            return;
+        }
+
+        const satisfied = new Set(best.plan.map(p => p.benefKey));
+        const unsatisfied = targets.filter(k => !satisfied.has(k));
+
+        // Donor usage summary
+        const usage = {};
+        best.plan.forEach(p => {
+            (p.items || []).forEach(it => {
+                if (!usage[it.donor]) usage[it.donor] = { reg:0, gold:0 };
+                const capType = (it.meta && it.meta.gold) ? 'gold' : 'reg';
+                usage[it.donor][capType] += 1;
+            });
+        });
+
+        const usageLines = Object.keys(usage)
+            .sort((a,b) => this.acctLabel(a).localeCompare(this.acctLabel(b)))
+            .map(dk => {
+                const u = usage[dk];
+                const r0 = caps0[dk]?.reg ?? 0;
+                const g0 = caps0[dk]?.gold ?? 0;
+                const parts = [];
+                if (u.reg) parts.push(`${u.reg}/${r0} reg`);
+                if (u.gold) parts.push(`${u.gold}/${g0} gold`);
+                return `<li><strong>${this.esc(this.acctLabel(dk))}</strong>: ${parts.join(' + ')}</li>`;
+            }).join('');
+
+        let html = '';
+        html += this.renderCard({
+            title: `Community Success Plan` ,
+            subtitle: `Goal: get as many accounts as possible to close ≥ 1 set (respects sends + dupes).`,
+            tags: [
+                { text: `${best.count}/${targets.length} accounts`, kind: best.count === targets.length ? 'good' : 'info' },
+                { text: `${best.sends} send(s)`, kind:'info' },
+                { text: `mode: ${Trade.mode}`, kind:'info' }
+            ],
+            bodyHtml: usageLines ? `<div class="smart-mini" style="margin-top:10px;">Donor send usage:</div><ul class="smart-list">${usageLines}</ul>` : ''
+        });
+
+        // Beneficiary cards
+        best.plan.forEach(p => {
+            const tags = [
+                { text: `Beneficiary: ${this.acctLabel(p.benefKey)}`, kind:'info' },
+                { text: `Set ${p.setNum}`, kind:'purp' },
+                { text: `${p.missingCount} missing`, kind: p.missingCount <= 2 ? 'good' : '' }
+            ];
+            const subtitle = p.setReward ? `Reward: ${p.setReward}` : `Close this set in ~${p.missingCount} send(s).`;
+            const li = (p.items || []).map(it => {
+                const meta = it.meta || {};
+                const flags = [];
+                if (meta.gold) flags.push('GOLD');
+                const flagStr = flags.length ? ` <span style="color:#999; font-size:11px; font-weight:900;">(${flags.join(', ')})</span>` : '';
+                return `<li><strong>${this.esc(this.acctLabel(it.donor))}</strong> → ${this.esc(this.acctLabel(p.benefKey))}: ${this.esc(it.name)} <span style="color:#666;">(${(meta.stars || 1)}★)</span>${flagStr}</li>`;
+            }).join('');
+
+            html += this.renderCard({
+                title: `✅ Close Set ${p.setNum}: ${p.setName}`,
+                subtitle,
+                tags,
+                bodyHtml: `<ul class="smart-list">${li}</ul>`
+            });
+        });
+
+        if (unsatisfied.length) {
+            const li = unsatisfied.map(k => `<li>${this.esc(this.acctLabel(k))}</li>`).join('');
+            html += this.renderCard({
+                title: `Still short under today’s send limits`,
+                subtitle: `These accounts couldn’t be scheduled to close a full set in the same plan. You can try Trade Fest, or run again after executing some trades (dup counts change).`,
+                tags: [{ text: `${unsatisfied.length} account(s)`, kind:'info' }],
+                bodyHtml: `<ul class="smart-list">${li}</ul>`,
+                variant: 'warn'
+            });
+        }
 
         this.outEl.innerHTML = html;
     },
@@ -5164,6 +5548,7 @@ submitGlobalPlanToday() {
         if (mode === 'fair_1for1') return this.modeFair1for1(partnerKey);
         if (mode === 'fair_stars') return this.modeFairStars(partnerKey);
         if (mode === 'community_close') return this.modeCommunityClose();
+        if (mode === 'community_success') return this.modeCommunitySuccess();
         if (mode === 'focus_close') return this.modeFocusClose();
         if (mode === 'star_chaser') return this.modeStarChaser();
         if (mode === 'multi_global') return this.modeMultiGlobal();
@@ -6900,4 +7285,3 @@ document.addEventListener('DOMContentLoaded', () => {
     </script>
 </body>
 </html>
-

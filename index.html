@@ -2,11 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Monopoly Go! Wizard Suite</title>
+    <title>Monopoly Go! Posh Pets Album Tracker</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Pacifico&display=swap');
-        * { box-sizing: border-box; user-select: none; }
+        * { box-sizing: border-box; }
+
+        /* Allow copy/paste of MoGo codes, links, etc. (no global selection lock) */
+        button, .btn, .btn-mini, .right-nav-item, .drawer-btn,
+        .sticker-slot, .sticker-card, .ctrl-btn, .album-pin-btn, .album-scroll-btn,
+        .board-scroll-btn, .acct-pick, .mode-btn, .vault-box, .trophy, .game-card, .gr-tile {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .copyable, .copyable * {
+            user-select: text;
+            -webkit-user-select: text;
+        }
+
         body { background-color: #2c2c2c; font-family: 'Nunito', sans-serif; margin: 0; padding: 20px 80px 20px 80px; min-height: 100vh; overflow-x: hidden; }
         
         /* --- ORIGINAL STYLES PRESERVED --- */
@@ -19,9 +33,88 @@
         
         .nav-item { padding: 12px 15px; cursor: pointer; font-weight: 800; transition: 0.2s; background: #f9f9f9; margin: 2px 0; font-size: 14px; }
         .nav-item:hover { filter: brightness(0.95); padding-left: 20px; }
+        .nav-item.active { filter: brightness(0.93); padding-left: 20px; }
 
         .main-container { display: flex; flex-wrap: wrap; gap: 30px; justify-content: center; transition: 0.3s; }
-        .album-set { width: 380px; background: #fcfbf4; border-radius: 20px; overflow: hidden; border: 4px solid #f0eee2; box-shadow: 0 10px 25px rgba(0,0,0,0.5); flex-shrink: 0; position: relative; }
+
+        
+        /* --- Album: Multi-account side-by-side (keep original card styling) --- */
+        .album-shell { width: 100%; position: relative; overflow-x: auto; overflow-y: visible; scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
+        .album-shell { scrollbar-width: none; }
+        .album-shell::-webkit-scrollbar { height: 0; width: 0; }
+
+        .album-accounts { display:flex; align-items:flex-start; gap: 22px; padding: 10px 8px 18px 8px; width: max-content; }
+
+        .album-account-col { width: 380px; flex: 0 0 auto; display:flex; flex-direction: column; gap: 18px; scroll-snap-align: start; scroll-snap-stop: always; }
+        .album-account-col.pinned { position: sticky; left: 0; z-index: 250; }
+
+        /* Compact, sticky per-account header (so you always know which column you’re editing) */
+        .album-acct-header { position: sticky; top: 6px; z-index: 260; background: #333; color: white; padding: 8px 10px; border-radius: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.28); }
+        .album-acct-top { display:flex; justify-content: space-between; align-items:center; gap: 10px; }
+        .album-acct-title { display:flex; align-items: baseline; gap: 8px; flex-wrap:wrap; min-width: 0; }
+        .album-acct-name { font-weight: 900; font-size: 14px; max-width: 220px; overflow:hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .album-acct-device { font-weight: 800; font-size: 11px; opacity: 0.85; }
+        .album-acct-actions { display:flex; align-items:center; gap: 8px; flex-shrink:0; }
+        .album-acct-stars { font-size: 12px; font-weight: 900; opacity: 0.95; white-space: nowrap; }
+        .album-acct-meta { margin-top: 4px; display:flex; gap: 10px; flex-wrap:wrap; font-size: 11px; font-weight: 800; opacity: 0.95; }
+        .album-acct-chip { background: rgba(255,255,255,0.12); padding: 2px 8px; border-radius: 999px; display:inline-flex; gap: 6px; align-items:center; }
+        .album-acct-chip a { color:#90caf9; text-decoration: underline; }
+
+        .album-pin-btn { border:none; border-radius: 12px; padding: 5px 8px; cursor:pointer; background: rgba(255,255,255,0.14); color:white; font-weight: 900; }
+        .album-pin-btn:hover { filter: brightness(1.15); }
+        .album-pin-btn.pinned { background: #ff4081; }
+
+        /* Always-visible account scrollers (mobile-friendly) */
+        .album-scroll-btn { position: fixed; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border: none; border-radius: 999px; background: rgba(255,255,255,0.92); box-shadow: 0 10px 25px rgba(0,0,0,0.35); cursor: pointer; font-weight: 900; z-index: 800; }
+        .album-scroll-btn.left { left: 76px; }
+        .album-scroll-btn.right { right: 76px; }
+        .album-scroll-btn:hover { transform: translateY(-50%) scale(1.05); }
+        .album-scroll-btn:active { transform: translateY(-50%) scale(0.98); }
+
+        .album-set.locked { opacity: 0.55; filter: grayscale(0.85); }
+        .album-set.locked .sticker-slot, .album-set.locked .ctrl-btn { cursor: not-allowed; }
+        .album-set.locked .sticker-slot { pointer-events: none; }
+        .prestige-lock-pill { display:none; margin-top: 6px; font-size: 10px; font-weight: 900; background: rgba(255,255,255,0.18); padding: 3px 8px; border-radius: 999px; width: fit-content; }
+
+        /* Album focus: save vertical space in compare mode */
+        body.album-compare .header-container { margin-bottom: 10px; }
+        body.album-compare .main-header-img { max-height: 140px; }
+        body.album-compare .account-bar { padding: 8px 12px; margin-bottom: 12px; }
+        body.album-compare .account-bar-title,
+        body.album-compare .account-bar-meta { display:none !important; }
+        body.album-compare .account-bar { justify-content: flex-end; }
+        body.album-compare .acct-select { padding: 4px 8px; font-size: 12px; }
+        body.album-compare .btn { padding: 5px 8px !important; font-size: 11px !important; }
+        body.album-compare .btn-mini { padding: 5px 8px; font-size: 11px; }
+
+        /* Compact header across compare-heavy pages (Album + Progress + Vault + Showroom) */
+        body.compare-compact .header-container { margin-bottom: 10px; }
+        body.compare-compact .main-header-img { max-height: 140px; }
+        body.compare-compact .account-bar { padding: 8px 12px; margin-bottom: 12px; }
+        body.compare-compact .account-bar-title,
+        body.compare-compact .account-bar-meta { display:none !important; }
+        body.compare-compact .account-bar { justify-content: flex-end; }
+        body.compare-compact .acct-select { padding: 4px 8px; font-size: 12px; }
+        body.compare-compact .btn { padding: 5px 8px !important; font-size: 11px !important; }
+        body.compare-compact .btn-mini { padding: 5px 8px; font-size: 11px; }
+
+
+        /* Mobile: always show +/- controls (no hover on touch) */
+
+        @media (hover: none) {
+            .controls { opacity: 1; }
+        }
+
+        /* Smaller screens: keep account scroll buttons reachable */
+        @media (max-width: 860px) {
+            body { padding: 20px 16px; }
+            .album-scroll-btn.left { left: 10px; }
+            .album-scroll-btn.right { right: 10px; }
+            .album-accounts { gap: 18px; }
+            .album-account-col { width: 340px; }
+        }
+
+        .album-set { width: 100%; max-width: 380px; background: #fcfbf4; border-radius: 20px; overflow: hidden; border: 4px solid #f0eee2; box-shadow: 0 10px 25px rgba(0,0,0,0.5); flex-shrink: 0; position: relative; }
         .set-header { padding: 15px; color: white; border-bottom: 2px solid rgba(255,255,255,0.3); }
         .set-num { font-size: 12px; font-weight: bold; opacity: 0.9; }
         .set-name { font-family: 'Pacifico', cursive; font-size: 24px; margin-bottom: 10px; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
@@ -110,15 +203,15 @@
         .accounts-board-wrap { max-width: 1200px; margin: 0 auto; }
         .accounts-board { display:flex; gap:16px; overflow-x:auto; padding: 14px 8px; }
         .acct-board-card { min-width: 340px; background:#ffffff; border-radius:18px; padding:14px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); border:2px solid #eee; flex: 0 0 auto; }
-        .acct-board-title { font-weight: 1000; font-size:18px; color:#333; display:flex; justify-content:space-between; align-items:center; gap:10px; }
-        .acct-pill { font-size:10px; font-weight:1000; padding:3px 8px; border-radius:999px; background:#f0f0f0; color:#333; border:1px solid #e2e2e2; }
+        .acct-board-title { font-weight: 900; font-size:18px; color:#333; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+        .acct-pill { font-size:10px; font-weight:900; padding:3px 8px; border-radius:999px; background:#f0f0f0; color:#333; border:1px solid #e2e2e2; }
         .acct-board-row { margin-top:8px; font-size:12px; color:#333; }
         .acct-board-row a { color:#1565c0; text-decoration: underline; }
         .near-sets { margin-top:10px; background:#fafafa; border:1px solid #eee; border-radius:14px; padding:10px; }
         .near-sets h4 { margin:0 0 8px 0; font-size:12px; color:#333; }
         .near-set { margin-bottom:10px; }
         .near-set:last-child { margin-bottom:0; }
-        .near-set-name { font-weight:1000; font-size:12px; color:#333; }
+        .near-set-name { font-weight:900; font-size:12px; color:#333; }
         .missing-list { margin:6px 0 0 16px; padding:0; font-size:12px; color:#555; }
 
 
@@ -127,11 +220,11 @@
         .acct-pick input[type="checkbox"] { transform: scale(1.1); cursor:pointer; }
         .acct-pick input[type="number"] { width:64px; padding:6px 8px; border-radius:10px; border:1px solid #ccc; font-weight:900; outline:none; }
         .acct-pick input[type="number"]:focus { border-color:#ff4081; box-shadow: 0 0 0 3px rgba(255,64,129,0.15); }
-        .acct-pick-name { font-weight:1000; color:#333; }
+        .acct-pick-name { font-weight:900; color:#333; }
 
         .acct-board-pending { margin-top:10px; background:#fff8e1; border:1px solid #ffe0b2; color:#6d4c41; padding:8px 12px; border-radius:14px; font-size:12px; font-weight:900; text-align:center; box-shadow: 0 6px 14px rgba(0,0,0,0.10); }
         .accounts-board-shell { position:relative; }
-        .board-scroll-btn { position:absolute; top: 50%; transform: translateY(-50%); width:38px; height:38px; border:none; border-radius:999px; background: rgba(255,255,255,0.92); box-shadow: 0 10px 25px rgba(0,0,0,0.25); cursor:pointer; font-weight:1000; }
+        .board-scroll-btn { position:absolute; top: 50%; transform: translateY(-50%); width:38px; height:38px; border:none; border-radius:999px; background: rgba(255,255,255,0.92); box-shadow: 0 10px 25px rgba(0,0,0,0.25); cursor:pointer; font-weight:900; }
         .board-scroll-btn.left { left: -10px; }
         .board-scroll-btn.right { right: -10px; }
         .board-scroll-btn:hover { transform: translateY(-50%) scale(1.05); }
@@ -139,7 +232,7 @@
         .acct-board-card.dragging { opacity:1; cursor: default; }
         .acct-board-title-left { display:flex; align-items:center; gap:10px; }
         .acct-board-move { display:flex; gap:6px; align-items:center; }
-        .acct-board-move button { border:none; border-radius:10px; padding:4px 8px; cursor:pointer; background:#f3f3f3; font-weight:1000; }
+        .acct-board-move button { border:none; border-radius:10px; padding:4px 8px; cursor:pointer; background:#f3f3f3; font-weight:900; }
         .acct-board-move button:hover { background:#eaeaea; }
         .acct-qr { width:78px; height:78px; border-radius:14px; border:1px solid #eee; background:#fff; padding:4px; object-fit: contain; }
         .acct-qr-mini { width:64px; height:64px; border-radius:14px; border:1px solid #eee; background:#fff; padding:4px; object-fit: contain; }
@@ -258,10 +351,10 @@
         .plan-list { display:flex; flex-direction:column; gap:10px; margin-top:12px; }
         .plan-item { background:#f7f7f7; border:1px solid #eee; border-radius:14px; padding:12px; display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
         .plan-item .meta { font-size:12px; font-weight:900; color:#666; }
-        .plan-item .title { font-weight:1000; color:#333; }
-        .plan-item .pill { font-size:11px; font-weight:1000; padding:4px 10px; border-radius:999px; background:white; border:1px solid #e5e5e5; }
+        .plan-item .title { font-weight:900; color:#333; }
+        .plan-item .pill { font-size:11px; font-weight:900; padding:4px 10px; border-radius:999px; background:white; border:1px solid #e5e5e5; }
         .plan-item .pill.gold { border-color: gold; background:#fffde7; }
-        .plan-item button { border:none; border-radius:10px; padding:8px 10px; cursor:pointer; font-weight:1000; }
+        .plan-item button { border:none; border-radius:10px; padding:8px 10px; cursor:pointer; font-weight:900; }
         .plan-item .danger { background:#ffebee; color:#b71c1c; }
 
     
@@ -273,7 +366,7 @@
         .smart-mdp input, .smart-mdp select { padding:10px; border-radius:12px; border:1px solid #ddd; font-weight:900; }
         .smart-mdp input[type="date"] { width:170px; }
         .smart-mdp .grow { flex:1; min-width:220px; }
-        .smart-mdp .btn { border:none; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:1000; }
+        .smart-mdp .btn { border:none; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:900; }
         .smart-mdp .btn.primary { background:#ff6f00; color:white; }
         .smart-mdp .btn.ghost { background:#eee; color:#333; }
         .smart-mdp .planout { margin-top:12px; display:flex; flex-direction:column; gap:10px; }
@@ -282,7 +375,7 @@
         .smart-mdp .plan-title { font-weight:1100; color:#333; }
         .smart-mdp .plan-meta { font-size:12px; font-weight:900; color:#666; margin-top:6px; }
         .smart-mdp .chips { margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; }
-        .smart-mdp .chip { font-size:11px; font-weight:1000; padding:4px 10px; border-radius:999px; background:white; border:1px solid #e5e5e5; }
+        .smart-mdp .chip { font-size:11px; font-weight:900; padding:4px 10px; border-radius:999px; background:white; border:1px solid #e5e5e5; }
         .smart-mdp .chip.gold { border-color: gold; background:#fffde7; }
 
     
@@ -355,7 +448,7 @@
     color: #fff;
     border-radius: 999px;
     padding: 8px 12px;
-    font-weight: 1000;
+    font-weight: 900;
     font-size: 12px;
 }
 #view-gameroom .game-platform {
@@ -387,7 +480,7 @@
 }
 #view-gameroom .game-icon { font-size: 22px; }
 #view-gameroom .game-desc { margin-top: 8px; font-size: 12px; color: rgba(255,255,255,0.85); line-height: 1.35; }
-#view-gameroom .game-req { margin-top: 10px; font-size: 12px; color: rgba(125,249,255,0.85); font-weight: 1000; }
+#view-gameroom .game-req { margin-top: 10px; font-size: 12px; color: rgba(125,249,255,0.85); font-weight: 900; }
 #view-gameroom .game-lock {
     position: absolute;
     right: 10px;
@@ -522,21 +615,28 @@
     </div>
 
     <div class="account-bar" style="max-width: 1200px; margin: 0 auto 20px auto;">
-        <div style="font-weight: 800; font-size: 18px;">
+        <div class="account-bar-title" style="font-weight: 800; font-size: 18px;">
             Current Player: <span id="display-name">No account</span>
             <span id="display-device" style="font-weight:700; font-size:12px; opacity:0.85; margin-left:6px;"></span>
         </div>
-        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:4px; font-size:12px; font-weight:800; color:#333;">
-            <span id="display-mogo-link-wrap" style="opacity:0.9;">MoGo Link: <a id="display-mogo-link" href="#" target="_blank" rel="noopener" style="color:#1565c0; text-decoration:underline;">—</a></span>
-            <span id="display-mogo-code-wrap" style="opacity:0.9;">MoGo Code: <span id="display-mogo-code">—</span></span>
+        <div class="account-bar-meta" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:4px; font-size:12px; font-weight:800; color:#333;">
+            <span id="display-mogo-link-wrap" style="opacity:0.9;">MoGo Link: <a id="display-mogo-link" class="copyable" href="#" target="_blank" rel="noopener" style="color:#1565c0; text-decoration:underline;">—</a> <button class="btn-mini" title="Copy MoGo link" onclick="Manager.copyTextFromEl('display-mogo-link')">⧉</button></span>
+            <span id="display-mogo-code-wrap" style="opacity:0.9;">MoGo Code: <span id="display-mogo-code" class="copyable">—</span> <button class="btn-mini" title="Copy MoGo code" onclick="Manager.copyTextFromEl('display-mogo-code')">⧉</button></span>
         </div>
-        <div style="display:flex; gap:10px; align-items: center; flex-wrap: wrap;">
+        <div class="account-bar-controls" style="display:flex; gap:10px; align-items: center; flex-wrap: wrap;">
              <span id="prestige-badge" style="display:none; background:#9c27b0; color:white; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:bold;">PRESTIGE</span>
             <select id="account-selector" class="acct-select" onchange="Manager.handleAccountSelect(this.value)"></select>
             <button class="btn" style="padding: 5px 10px; font-size: 12px;" onclick="Manager.openAccountModal('add')">➕ Add</button>
             <button class="btn" style="padding: 5px 10px; font-size: 12px;" onclick="Manager.openAccountModal('edit')">✏️ Edit</button>
             <button class="btn" style="padding: 5px 10px; font-size: 12px;" onclick="Manager.deleteCurrentAccount()">🗑️ Delete</button>
             <button class="btn" style="padding: 5px 10px; font-size: 12px;" onclick="Manager.togglePrestige()">Toggle Prestige</button>
+
+            <div id="album-view-controls" style="display:none; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span style="font-size:12px; font-weight:900; opacity:0.9;">Album View:</span>
+                <button class="btn-mini" id="album-mode-scroll-btn" onclick="Manager.setAlbumMode('scroll')">Scroll Down</button>
+                <button class="btn-mini" id="album-mode-single-btn" onclick="Manager.setAlbumMode('single')">Single Set</button>
+                <span id="album-mode-set-pill" class="acct-pill" style="display:none;">Set 1</span>
+            </div>
         </div>
     </div>
 
@@ -622,8 +722,11 @@
     </div>
 
     <div id="view-album" class="app-view active">
-        <div class="main-container" id="album-container">
-           </div>
+        <div class="album-shell" id="album-shell">
+            <button class="album-scroll-btn left" onclick="Manager.scrollAlbumAccounts(-1)" title="Scroll accounts left">◀</button>
+            <button class="album-scroll-btn right" onclick="Manager.scrollAlbumAccounts(1)" title="Scroll accounts right">▶</button>
+            <div class="album-accounts" id="album-container"></div>
+        </div>
     </div>
 
     <div id="view-bulk" class="app-view">
@@ -647,6 +750,13 @@
 
     <div id="view-stats" class="app-view">
         <h2 style="color:white; font-family:'Pacifico', cursive;">Progress Tracker</h2>
+        <div class="album-shell compare-shell" id="stats-shell" style="display:none;">
+            <button class="album-scroll-btn left" onclick="Manager.scrollCompare('stats', -1)" title="Scroll accounts left">◀</button>
+            <button class="album-scroll-btn right" onclick="Manager.scrollCompare('stats', 1)" title="Scroll accounts right">▶</button>
+            <div class="album-accounts" id="stats-container"></div>
+        </div>
+
+        <div id="stats-single">
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-title">Album Completion</div>
@@ -678,6 +788,8 @@
             </div>
         </div>
 
+        </div>
+
     </div>
 
     <div id="view-accounts" class="app-view">
@@ -689,7 +801,7 @@
             
             <div class="planner-container" style="margin-top:14px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-                    <div style="font-weight:1000; color:#333;">Compare settings</div>
+                    <div style="font-weight:900; color:#333;">Compare settings</div>
                     <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
                                                 <button class="btn-mini primary" id="accounts-board-apply-btn" onclick="AccountsBoard.applyDraft()" disabled>Update Board</button>
                         <button class="btn-mini" id="accounts-board-discard-btn" onclick="AccountsBoard.discardDraft()" disabled>Discard</button>
@@ -711,7 +823,13 @@
     </div>
 
     <div id="view-vault" class="app-view">
-        <div class="vault-container">
+        <div class="album-shell compare-shell" id="vault-shell" style="display:none;">
+            <button class="album-scroll-btn left" onclick="Manager.scrollCompare('vault', -1)" title="Scroll accounts left">◀</button>
+            <button class="album-scroll-btn right" onclick="Manager.scrollCompare('vault', 1)" title="Scroll accounts right">▶</button>
+            <div class="album-accounts" id="vault-container"></div>
+        </div>
+        <div id="vault-single">
+            <div class="vault-container">
             <div class="vault-header">Stickers for Rewards</div>
             <div class="star-count">
                 <span class="star-icon">★</span>
@@ -737,6 +855,7 @@
                     <div class="vault-cost">★ 700</div>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 
@@ -777,7 +896,7 @@
 
             <div style="margin-top:20px; background:white; padding:14px; border-radius:16px; border:1px solid #eee;">
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-                    <div style="font-weight:1000; color:#333;">Trade Suggestions</div>
+                    <div style="font-weight:900; color:#333;">Trade Suggestions</div>
                     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                         <select id="compare-target" class="acct-select" style="color:black;"></select>
                         <button class="btn btn-primary" onclick="Trade.generateSuggestions()">Suggest Trades</button>
@@ -855,22 +974,22 @@
                 This uses duplicates only and respects send limits (5/day, Trade Fest 10/day, Blitz gold sends 2/day + selected gold list).
             </div>
             <div class="row">
-                <label style="font-size:12px; font-weight:1000; color:#555;">Target</label>
+                <label style="font-size:12px; font-weight:900; color:#555;">Target</label>
                 <select id="mdp-target"></select>
 
-                <label style="font-size:12px; font-weight:1000; color:#555;">From</label>
+                <label style="font-size:12px; font-weight:900; color:#555;">From</label>
                 <input id="mdp-start" type="date">
-                <label style="font-size:12px; font-weight:1000; color:#555;">To</label>
+                <label style="font-size:12px; font-weight:900; color:#555;">To</label>
                 <input id="mdp-end" type="date">
 
-                <label style="font-size:12px; font-weight:1000; color:#555;">Objective</label>
+                <label style="font-size:12px; font-weight:900; color:#555;">Objective</label>
                 <select id="mdp-objective">
                     <option value="rewards">Max Set Rewards</option>
                     <option value="completion">Max Album Progress</option>
                     <option value="gold_lock">Gold Lock Target (non-gold first)</option>
                 </select>
 
-                <label style="font-size:12px; font-weight:1000; color:#555;">Auto-Extend</label>
+                <label style="font-size:12px; font-weight:900; color:#555;">Auto-Extend</label>
                 <select id="mdp-autoextend">
                     <option value="0">Off</option>
                     <option value="7">Up to +7 days</option>
@@ -878,7 +997,7 @@
                     <option value="21">Up to +21 days</option>
                 </select>
 
-                <label style="font-size:12px; font-weight:1000; color:#555;">Donor Strategy</label>
+                <label style="font-size:12px; font-weight:900; color:#555;">Donor Strategy</label>
                 <select id="mdp-donor-strategy">
                     <option value="fast" selected>Fast (simple)</option>
                     <option value="cooperative">Cooperative (minimize days)</option>
@@ -965,7 +1084,15 @@
             <h1 style="font-family:'Pacifico'; font-size:48px; color:#ffd700; text-shadow:0 0 20px #ff6f00;">The Show Room</h1>
             <p>Your Achievements across all accounts</p>
         </div>
+        <div class="album-shell compare-shell" id="showroom-shell" style="display:none;">
+            <button class="album-scroll-btn left" onclick="Manager.scrollCompare('showroom', -1)" title="Scroll accounts left">◀</button>
+            <button class="album-scroll-btn right" onclick="Manager.scrollCompare('showroom', 1)" title="Scroll accounts right">▶</button>
+            <div class="album-accounts" id="showroom-container"></div>
+        </div>
+        <div id="showroom-single">
+
         <div class="trophy-shelf" id="trophy-case"></div>
+        </div>
     </div>
 
     <div id="view-gameroom" class="app-view">
@@ -1272,7 +1399,8 @@
                 accounts: {}, // { 'Account Name': { name:'', device:'', data:{}, prestige:false, lastTradeReset:0, tradesUsed:0 } }
                 settings: {
                     tradeMode: 'regular', // regular, blitz, fest
-                    blitzCards: []
+                    blitzCards: [],
+                    album: { mode: 'scroll', selectedSet: 1, pinnedAccount: null }
                 }
             },
 
@@ -1326,6 +1454,13 @@
                 }
                 if (!('tradeMode' in this.state.settings)) this.state.settings.tradeMode = 'regular';
                 if (!Array.isArray(this.state.settings.blitzCards)) this.state.settings.blitzCards = [];
+                if (!this.state.settings.album || typeof this.state.settings.album !== 'object') {
+                    this.state.settings.album = { mode: 'scroll', selectedSet: 1, pinnedAccount: null };
+                }
+                if (!('mode' in this.state.settings.album)) this.state.settings.album.mode = 'scroll';
+                if (!('selectedSet' in this.state.settings.album)) this.state.settings.album.selectedSet = 1;
+                if (!('pinnedAccount' in this.state.settings.album)) this.state.settings.album.pinnedAccount = null;
+
 
                 // Migration from older single-account storage (if present)
                 if (Object.keys(this.state.accounts).length === 0) {
@@ -1636,6 +1771,58 @@
                 return 'https://' + u;
             },
 
+            copyText(text) {
+                const t = String(text || '').trim();
+                if (!t || t === '—') {
+                    Notify.show("Nothing to copy.", "warning");
+                    return;
+                }
+                const done = () => Notify.show("Copied to clipboard!", "success");
+                const fail = () => Notify.show("Couldn't copy automatically — select the text and copy manually.", "warning");
+
+                try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(t).then(done).catch(() => {
+                            try {
+                                const ta = document.createElement('textarea');
+                                ta.value = t;
+                                ta.setAttribute('readonly', '');
+                                ta.style.position = 'fixed';
+                                ta.style.opacity = '0';
+                                document.body.appendChild(ta);
+                                ta.select();
+                                document.execCommand('copy');
+                                document.body.removeChild(ta);
+                                done();
+                            } catch(e) { fail(); }
+                        });
+                        return;
+                    }
+                } catch(e) {}
+
+                // Fallback
+                try {
+                    const ta = document.createElement('textarea');
+                    ta.value = t;
+                    ta.setAttribute('readonly', '');
+                    ta.style.position = 'fixed';
+                    ta.style.opacity = '0';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    done();
+                } catch(e) { fail(); }
+            },
+
+            copyTextFromEl(id) {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const t = (el.textContent || '').trim();
+                this.copyText(t);
+            },
+
+
             setAccountBar() {
                 const acct = (this.state.currentAccount && this.state.accounts[this.state.currentAccount]) ? this.state.accounts[this.state.currentAccount] : null;
 
@@ -1689,14 +1876,20 @@
                 const acct = (this.state.currentAccount && this.state.accounts[this.state.currentAccount]) ? this.state.accounts[this.state.currentAccount] : null;
                 const data = (acct && acct.data) ? acct.data : {};
 
+                // Determine which view is currently active (avoid relying on a local switchView param)
+                const activeViewId = (document.querySelector('.app-view.active') || {}).id || '';
+
                 // Account Bar display
                 this.setAccountBar();
 
                 // Prestige Visibility
                 const badge = document.getElementById('prestige-badge');
                 if (badge) badge.style.display = (acct && acct.prestige) ? 'inline-block' : 'none';
-                const set25 = document.getElementById('set-25');
-                if (set25) set25.style.display = (acct && acct.prestige) ? 'block' : 'none';
+                if (typeof this.updateAlbumLockState === 'function') this.updateAlbumLockState();
+                document.body.classList.toggle('album-compare', activeViewId === 'view-album');
+                document.body.classList.toggle('compare-compact', ['view-album','view-stats','view-vault','view-showroom'].includes(activeViewId));
+                this.updateAlbumControls();
+                this.syncCompareViews();
 
                 // Update Cards
                 document.querySelectorAll('.card-container').forEach(card => {
@@ -1763,94 +1956,592 @@
                 if(typeof Showroom !== 'undefined' && Showroom.checkAchievements) Showroom.checkAchievements();
             },
 
-
             updateProgressBars() {
-                const data = this.getCurrentData();
-                SET_DATA.forEach((set, idx) => {
-                    const setId = idx + 1;
-                    const el = document.getElementById(`prog-${setId}`);
-                    const txt = document.getElementById(`prog-text-${setId}`);
-                    if(!el) return;
+                // Multi-account Album view (and any other rendered set cards with data attributes)
+                document.querySelectorAll('.album-set[data-set][data-account]').forEach(setEl => {
+                    const acctKey = setEl.getAttribute('data-account');
+                    const setId = parseInt(setEl.getAttribute('data-set'), 10);
+
+                    const acct = (acctKey && this.state.accounts[acctKey]) ? this.state.accounts[acctKey] : null;
+                    const data = (acct && acct.data) ? acct.data : {};
+                    const set = SET_DATA[setId - 1];
+                    if (!set) return;
 
                     let collected = 0;
                     set.cards.forEach((_, cIdx) => {
-                        if (data[`s${setId}_${cIdx}`] > 0) collected++;
+                        if ((data[`s${setId}_${cIdx}`] || 0) > 0) collected++;
                     });
 
-                    el.style.width = (collected / 9 * 100) + '%';
-                    txt.innerText = `${collected} / 9`;
+                    const fill = setEl.querySelector('[data-role="progress-fill"]') || setEl.querySelector('.progress-bar-fill');
+                    const txt = setEl.querySelector('[data-role="progress-text"]') || setEl.querySelector('.progress-text');
+                    if (fill) fill.style.width = (collected / 9 * 100) + '%';
+                    if (txt) txt.innerText = `${collected} / 9`;
+                });
+
+                // Backwards compatibility: if legacy ids exist, update them too
+                try {
+                    const acct = (this.state.currentAccount && this.state.accounts[this.state.currentAccount]) ? this.state.accounts[this.state.currentAccount] : null;
+                    const data = (acct && acct.data) ? acct.data : {};
+
+                    SET_DATA.forEach((set, idx) => {
+                        const setId = idx + 1;
+                        const el = document.getElementById(`prog-${setId}`);
+                        const txt = document.getElementById(`prog-text-${setId}`);
+                        if(!el || !txt) return;
+
+                        let collected = 0;
+                        set.cards.forEach((_, cIdx) => {
+                            if ((data[`s${setId}_${cIdx}`] || 0) > 0) collected++;
+                        });
+
+                        el.style.width = (collected / 9 * 100) + '%';
+                        txt.innerText = `${collected} / 9`;
+                    });
+                } catch(e) {}
+            },
+
+            _getAlbumCfg() {
+                if (!this.state.settings) this.state.settings = {};
+                if (!this.state.settings.album || typeof this.state.settings.album !== 'object') {
+                    this.state.settings.album = { mode: 'scroll', selectedSet: 1, pinnedAccount: null };
+                }
+                const a = this.state.settings.album;
+                if (!a.mode) a.mode = 'scroll';
+                if (!Number.isFinite(parseInt(a.selectedSet))) a.selectedSet = 1;
+                a.selectedSet = Math.max(1, Math.min(SET_DATA.length, parseInt(a.selectedSet)));
+                if (!('pinnedAccount' in a)) a.pinnedAccount = null;
+                if (a.pinnedAccount && !this.state.accounts[a.pinnedAccount]) a.pinnedAccount = null;
+                return a;
+            },
+
+            _getOrderedAlbumAccounts() {
+                const keys = Object.keys(this.state.accounts || {});
+                const cfg = (this.state.settings && this.state.settings.accountsBoard) ? this.state.settings.accountsBoard : null;
+
+                let order = (cfg && Array.isArray(cfg.order)) ? cfg.order.filter(k => keys.includes(k)) : [];
+                keys.forEach(k => { if (!order.includes(k)) order.push(k); });
+
+                const a = this._getAlbumCfg();
+                if (a.pinnedAccount && order.includes(a.pinnedAccount)) {
+                    order = [a.pinnedAccount, ...order.filter(k => k !== a.pinnedAccount)];
+                }
+                return order;
+            },
+
+
+            _getCompareViewsRoot() {
+                if (!this.state.settings) this.state.settings = {};
+                if (!this.state.settings.compareViews || typeof this.state.settings.compareViews !== 'object') {
+                    this.state.settings.compareViews = {};
+                }
+                return this.state.settings.compareViews;
+            },
+
+            _getCompareCfg(viewKey) {
+                const root = this._getCompareViewsRoot();
+                if (!root[viewKey] || typeof root[viewKey] !== 'object') root[viewKey] = { pinnedAccount: null };
+                const c = root[viewKey];
+                if (!('pinnedAccount' in c)) c.pinnedAccount = null;
+                if (c.pinnedAccount && !(this.state.accounts && this.state.accounts[c.pinnedAccount])) c.pinnedAccount = null;
+                return c;
+            },
+
+            _getOrderedSelectedAccounts(viewKey) {
+                const keys = Object.keys(this.state.accounts || {});
+                const cfg = (this.state.settings && this.state.settings.accountsBoard) ? this.state.settings.accountsBoard : null;
+
+                let order = (cfg && Array.isArray(cfg.order)) ? cfg.order.filter(k => keys.includes(k)) : [];
+                keys.forEach(k => { if (!order.includes(k)) order.push(k); });
+
+                const selected = (cfg && cfg.selected && typeof cfg.selected === 'object') ? cfg.selected : {};
+                order = order.filter(k => selected[k] !== false);
+
+                const c = this._getCompareCfg(viewKey);
+                if (c.pinnedAccount && order.includes(c.pinnedAccount)) {
+                    order = [c.pinnedAccount, ...order.filter(k => k !== c.pinnedAccount)];
+                }
+                return order;
+            },
+
+            toggleComparePin(viewKey, acctKey) {
+                const c = this._getCompareCfg(viewKey);
+                const shell = document.getElementById(`${viewKey}-shell`);
+                const prevLeft = shell ? shell.scrollLeft : 0;
+
+                c.pinnedAccount = (c.pinnedAccount === acctKey) ? null : acctKey;
+                this.saveData();
+
+                if (viewKey === 'stats' && typeof Stats !== 'undefined' && Stats.renderCompare) Stats.renderCompare();
+                if (viewKey === 'vault' && typeof Vault !== 'undefined' && Vault.renderCompare) Vault.renderCompare();
+                if (viewKey === 'showroom' && typeof Showroom !== 'undefined' && Showroom.renderCompare) Showroom.renderCompare();
+
+                this._updateAlbumAccountHeaderStats();
+
+                setTimeout(() => {
+                    const sh = document.getElementById(`${viewKey}-shell`);
+                    if (sh) sh.scrollLeft = prevLeft;
+                }, 0);
+            },
+
+            scrollCompare(viewKey, dir) {
+                const container = document.getElementById(`${viewKey}-shell`);
+                if (!container) return;
+                const firstCol = container.querySelector('.album-account-col');
+                const colW = firstCol ? firstCol.getBoundingClientRect().width : 380;
+                const step = Math.max(240, Math.round(colW + 30));
+                container.scrollBy({ left: dir * step, behavior: 'smooth' });
+            },
+
+            shouldUseCompare(viewKey) {
+                return this._getOrderedSelectedAccounts(viewKey).length > 1;
+            },
+
+            _syncCompareVisibility(viewKey, singleId) {
+                const shell = document.getElementById(`${viewKey}-shell`);
+                const single = document.getElementById(singleId);
+                if (!shell || !single) return false;
+                const use = this.shouldUseCompare(viewKey);
+                shell.style.display = use ? 'block' : 'none';
+                single.style.display = use ? 'none' : 'block';
+                return use;
+            },
+
+            _buildCompareAcctHeader(acctKey, viewKey) {
+    const acct = (acctKey && this.state.accounts) ? this.state.accounts[acctKey] : null;
+    if (!acct) return '';
+    const c = this._getCompareCfg(viewKey);
+    const pinned = c.pinnedAccount === acctKey;
+
+    const esc = this.esc.bind(this);
+    const link = (acct.mogoLink || '').trim();
+    const code = (acct.mogoCode || '').trim();
+
+    const linkHtml = link
+        ? `<span>🔗</span><span class="copyable" style="opacity:0.95; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${esc(link)}">${esc(link)}</span>
+           <button class="btn-mini" data-action="copy" data-text="${esc(link)}" title="Copy MoGo link">⧉</button>
+           <a href="${esc(link)}" target="_blank" rel="noopener" title="Open link" style="color:#7df9ff; text-decoration:underline;">↗</a>`
+        : `<span>🔗</span><span style="opacity:0.8;">—</span>`;
+
+    const codeHtml = code
+        ? `<span>🧾</span><span class="copyable" style="opacity:0.95;" title="${esc(code)}">${esc(code)}</span>
+           <button class="btn-mini" data-action="copy" data-text="${esc(code)}" title="Copy MoGo code">⧉</button>`
+        : `<span>🧾</span><span style="opacity:0.8;">—</span>`;
+
+    return `
+        <div class="album-acct-header" data-account="${esc(acctKey)}">
+            <div class="album-acct-top">
+                <div class="album-acct-title">
+                    <span class="album-acct-name">${esc(acct.name || acctKey)}</span>
+                    ${acct.device ? `<span class="album-acct-device">(${esc(acct.device)})</span>` : ''}
+                    ${acct.prestige ? `<span class="acct-pill" style="background:#9c27b0; color:white; border:none; padding:2px 6px; font-size:10px;">PRESTIGE</span>` : ''}
+                    ${pinned ? `<span class="acct-pill" style="background:#ff4081; color:white; border:none; padding:2px 6px; font-size:10px;">PINNED</span>` : ''}
+                </div>
+                <div class="album-acct-actions">
+                    <div class="album-acct-stars">⭐ <span data-role="acct-stars">0</span></div>
+                    <button class="album-pin-btn ${pinned ? 'pinned' : ''}" data-action="pin" data-view="${esc(viewKey)}" data-account="${esc(acctKey)}" title="${pinned ? 'Unpin account' : 'Pin this account'}">📌</button>
+                </div>
+            </div>
+            <div class="album-acct-meta">
+                <span class="album-acct-chip">${linkHtml}</span>
+                <span class="album-acct-chip">${codeHtml}</span>
+            </div>
+        </div>
+    `;
+},
+
+            syncCompareViews() {
+                const active = document.querySelector('.app-view.active');
+                const activeId = active ? active.id : '';
+
+                if (activeId === 'view-stats') {
+                    const use = this._syncCompareVisibility('stats', 'stats-single');
+                    if (use && typeof Stats !== 'undefined' && Stats.renderCompare) Stats.renderCompare();
+                }
+                if (activeId === 'view-vault') {
+                    const use = this._syncCompareVisibility('vault', 'vault-single');
+                    if (use && typeof Vault !== 'undefined' && Vault.renderCompare) Vault.renderCompare();
+                }
+                if (activeId === 'view-showroom') {
+                    const use = this._syncCompareVisibility('showroom', 'showroom-single');
+                    if (use && typeof Showroom !== 'undefined' && Showroom.renderCompare) Showroom.renderCompare();
+                }
+            },
+
+            updateAlbumControls() {
+                const wrap = document.getElementById('album-view-controls');
+                if (!wrap) return;
+
+                const active = document.querySelector('.app-view.active');
+                const inAlbum = active && active.id === 'view-album';
+                wrap.style.display = inAlbum ? 'flex' : 'none';
+                if (!inAlbum) return;
+
+                const a = this._getAlbumCfg();
+                const bScroll = document.getElementById('album-mode-scroll-btn');
+                const bSingle = document.getElementById('album-mode-single-btn');
+                const pill = document.getElementById('album-mode-set-pill');
+
+                if (bScroll) bScroll.className = (a.mode === 'scroll') ? 'btn-mini primary' : 'btn-mini';
+                if (bSingle) bSingle.className = (a.mode === 'single') ? 'btn-mini primary' : 'btn-mini';
+
+                if (pill) {
+                    pill.style.display = (a.mode === 'single') ? 'inline-flex' : 'none';
+                    pill.textContent = `Set ${a.selectedSet}`;
+                }
+            },
+
+            setAlbumMode(mode) {
+                const a = this._getAlbumCfg();
+                a.mode = (mode === 'single') ? 'single' : 'scroll';
+                this.saveData();
+                this.buildAlbumUI();
+                this.buildNav();
+                this.updateUI();
+                this.updateAlbumControls();
+
+                if (a.mode === 'single') {
+                    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e) {}
+                }
+            },
+
+            setAlbumSelectedSet(setNum) {
+                const a = this._getAlbumCfg();
+                a.selectedSet = Math.max(1, Math.min(SET_DATA.length, parseInt(setNum)));
+                this.saveData();
+
+                if (a.mode === 'single') {
+                    this.buildAlbumUI();
+                    this.updateUI();
+                    this.updateAlbumControls();
+                } else {
+                    this.scrollToAlbumSet(a.selectedSet);
+                }
+
+                this.buildNav();
+            },
+
+            togglePinAccount(acctKey) {
+                const a = this._getAlbumCfg();
+                const current = a.pinnedAccount;
+
+                const container = document.getElementById('album-shell');
+                const prevLeft = container ? container.scrollLeft : 0;
+
+                a.pinnedAccount = (current === acctKey) ? null : acctKey;
+                this.saveData();
+
+                this.buildAlbumUI();
+                this.updateUI();
+                this.updateAlbumControls();
+                this.buildNav();
+
+                setTimeout(() => {
+                    const sh = document.getElementById('album-shell');
+                    if (sh) sh.scrollLeft = prevLeft;
+                }, 0);
+            },
+
+            scrollAlbumAccounts(dir) {
+                const container = document.getElementById('album-shell');
+                if (!container) return;
+
+                const firstCol = container.querySelector('.album-account-col');
+                const colW = firstCol ? firstCol.getBoundingClientRect().width : 380;
+                const step = Math.max(240, Math.round(colW + 30));
+
+                container.scrollBy({ left: dir * step, behavior: 'smooth' });
+            },
+
+
+            _ensureAlbumBound() {
+                if (this._albumBound) return;
+                this._albumBound = true;
+
+                const shell = document.getElementById('album-shell');
+                if (!shell) return;
+
+                shell.addEventListener('click', (e) => {
+                    // Copy button (MoGo code/link)
+                    const copyBtn = e.target.closest('button.btn-mini[data-action="copy"]');
+                    if (copyBtn) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const t = copyBtn.getAttribute('data-text') || '';
+                        if (t) Manager.copyText(t);
+                        return;
+                    }
+
+                    
+// Pin button
+const pinBtn = e.target.closest('button.album-pin-btn[data-action="pin"]');
+if (pinBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const acctKey = pinBtn.getAttribute('data-account');
+    const viewKey = pinBtn.getAttribute('data-view');
+    if (acctKey) {
+        if (viewKey) Manager.toggleComparePin(viewKey, acctKey);
+        else Manager.togglePinAccount(acctKey);
+    }
+    return;
+}// +/- buttons
+                    const ctrl = e.target.closest('button.ctrl-btn');
+                    if (ctrl) {
+                        const card = ctrl.closest('.card-container');
+                        if (!card) return;
+                        const acctKey = card.getAttribute('data-account');
+                        const id = card.getAttribute('data-id');
+                        if (!acctKey || !id) return;
+
+                        const setEl = card.closest('.album-set');
+                        if (setEl && setEl.classList.contains('locked')) return;
+
+                        const delta = ctrl.classList.contains('minus') ? -1 : 1;
+                        Manager.updateCardForAccount(acctKey, id, delta);
+                        return;
+                    }
+
+                    // Sticker slot click
+                    const slot = e.target.closest('.sticker-slot[data-action="slot"]');
+                    if (slot) {
+                        const editable = slot.getAttribute('data-editable');
+                        if (editable === '0') return;
+
+                        const card = slot.closest('.card-container');
+                        if (!card) return;
+                        const acctKey = card.getAttribute('data-account');
+                        const id = card.getAttribute('data-id');
+                        if (!acctKey || !id) return;
+
+                        const setEl = card.closest('.album-set');
+                        if (setEl && setEl.classList.contains('locked')) return;
+
+                        Manager.updateCardForAccount(acctKey, id, 1);
+                    }
                 });
             },
 
+            _computeVaultStarsForAccount(acctKey) {
+                const acct = (acctKey && this.state.accounts && this.state.accounts[acctKey]) ? this.state.accounts[acctKey] : null;
+                const data = (acct && acct.data) ? acct.data : {};
+
+                let stars = 0;
+                for (const id in data) {
+                    const count = data[id] || 0;
+                    if (count <= 1) continue;
+                    const meta = (this.cardDb && this.cardDb[id]) ? this.cardDb[id] : null;
+                    if (!meta) continue;
+                    const dupeCount = count - 1;
+                    const val = meta.stars * (meta.gold ? 2 : 1);
+                    stars += dupeCount * val;
+                }
+                return stars;
+            },
+
+            _updateAlbumAccountHeaderStats() {
+                document.querySelectorAll('.album-acct-header[data-account]').forEach(h => {
+                    const acctKey = h.getAttribute('data-account');
+                    const span = h.querySelector('[data-role="acct-stars"]');
+                    if (!span) return;
+                    span.textContent = String(this._computeVaultStarsForAccount(acctKey));
+                });
+            },
+
+            scrollToAlbumSet(setNum) {
+                const a = this._getAlbumCfg();
+                const pinnedSel = a.pinnedAccount ? `.album-account-col[data-account="${(window.CSS && window.CSS.escape) ? window.CSS.escape(a.pinnedAccount) : a.pinnedAccount}"]` : '';
+                let target = null;
+
+                try {
+                    if (pinnedSel) target = document.querySelector(`${pinnedSel} .album-set[data-set="${setNum}"]`);
+                } catch(e) {}
+
+                if (!target) target = document.querySelector(`.album-account-col .album-set[data-set="${setNum}"]`);
+
+                if (target) {
+                    const r = target.getBoundingClientRect();
+                    const y = window.scrollY + r.top - 12;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                }
+            },
+
+
             buildAlbumUI() {
                 const container = document.getElementById('album-container');
+                if (!container) return;
+
                 container.innerHTML = '';
 
-                SET_DATA.forEach((set, sIdx) => {
-                    const setNum = sIdx + 1;
-                    // Manual star mapping based on set progression (approximation of original)
-                    const baseStars = setNum <= 2 ? 1 : setNum <= 6 ? 2 : setNum <= 10 ? 3 : setNum <= 15 ? 4 : 5;
+                const keys = this._getOrderedAlbumAccounts();
+                if (keys.length === 0) {
+                    container.innerHTML = '<div style="color:white; font-weight:900; padding: 20px;">Add an account to start your album.</div>';
+                    return;
+                }
 
-                    let html = `
-                    <div class="album-set" id="set-${setNum}">
-                        <div class="set-header" style="background-color: ${set.color};">
-                            <div class="set-num">Set ${setNum}</div>
-                            <div class="set-name">${set.name}</div>
-                            <div class="set-reward">Reward: ${set.reward || ""}</div>
-                            <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-${setNum}"></div></div>
-                            <div class="progress-text" id="prog-text-${setNum}">0 / 9</div>
+                const a = this._getAlbumCfg();
+                const esc = (str) => String(str ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+
+                // Choose sets to render
+                const sets = (a.mode === 'single')
+                    ? [{ set: SET_DATA[a.selectedSet - 1], setNum: a.selectedSet }]
+                    : SET_DATA.map((s, i) => ({ set: s, setNum: i + 1 }));
+
+                keys.forEach((acctKey) => {
+                    const acct = this.state.accounts[acctKey];
+                    if (!acct) return;
+
+                    const pinned = (a.pinnedAccount === acctKey);
+                    const col = document.createElement('div');
+                    col.className = `album-account-col${pinned ? ' pinned' : ''}`;
+                    col.setAttribute('data-account', acctKey);
+
+                    
+                    const link = (acct.mogoLink || '').trim();
+                    const code = (acct.mogoCode || '').trim();
+
+                    const linkHtml = link
+                        ? `<span>🔗</span><span class="copyable" style="opacity:0.95; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${esc(link)}">${esc(link)}</span>
+                           <button class="btn-mini" data-action="copy" data-text="${esc(link)}" title="Copy MoGo link">⧉</button>
+                           <a href="${esc(link)}" target="_blank" rel="noopener" title="Open link" style="color:#7df9ff; text-decoration:underline;">↗</a>`
+                        : `<span>🔗</span><span style="opacity:0.8;">—</span>`;
+
+                    const codeHtml = code
+                        ? `<span>🧾</span><span class="copyable" style="opacity:0.95;" title="${esc(code)}">${esc(code)}</span>
+                           <button class="btn-mini" data-action="copy" data-text="${esc(code)}" title="Copy MoGo code">⧉</button>`
+                        : `<span>🧾</span><span style="opacity:0.8;">—</span>`;
+
+                    col.innerHTML = `
+                        <div class="album-acct-header" data-account="${esc(acctKey)}">
+                            <div class="album-acct-top">
+                                <div class="album-acct-title">
+                                    <span class="album-acct-name">${esc(acct.name || acctKey)}</span>
+                                    ${acct.device ? `<span class="album-acct-device">(${esc(acct.device)})</span>` : ''}
+                                    ${acct.prestige ? `<span class="acct-pill" style="background:#9c27b0; color:white; border:none; padding:2px 6px; font-size:10px;">PRESTIGE</span>` : ''}
+                                    ${pinned ? `<span class="acct-pill" style="background:#ff4081; color:white; border:none; padding:2px 6px; font-size:10px;">PINNED</span>` : ''}
+                                </div>
+                                <div class="album-acct-actions">
+                                    <div class="album-acct-stars">⭐ <span data-role="acct-stars">0</span></div>
+                                    <button class="album-pin-btn ${pinned ? 'pinned' : ''}" data-action="pin" data-account="${esc(acctKey)}" title="${pinned ? 'Unpin account' : 'Pin this account'}">📌</button>
+                                </div>
+                            </div>
+                            <div class="album-acct-meta">
+                                <span class="album-acct-chip">${linkHtml}</span>
+                                <span class="album-acct-chip">${codeHtml}</span>
+                            </div>
                         </div>
-                        <div class="grid-layout">`;
+                    `;
+// Add sets
+                    sets.forEach(({ set, setNum }) => {
+                        if (!set) return;
 
-                    set.cards.forEach((cardName, cIdx) => {
-                        const id = `s${setNum}_${cIdx}`;
-                        const meta = CARD_META[id] || {};
-                        const isGold = !!meta.gold;
-                        // Stars are authoritative from spreadsheet; keep baseStars as a safety fallback.
-                        let stars = (typeof meta.stars === 'number') ? meta.stars : baseStars;
+                        // Manual star mapping fallback
+                        const baseStars = setNum <= 2 ? 1 : setNum <= 6 ? 2 : setNum <= 10 ? 3 : setNum <= 15 ? 4 : 5;
 
-                        // Store star count in meta for stats
-                        if(!Manager.cardDb) Manager.cardDb = {};
-                        Manager.cardDb[id] = { id: id, name: cardName, stars: stars, gold: isGold, set: setNum };
+                        const locked = (setNum === 25 && !acct.prestige);
+                        let html = `
+                            <div class="album-set${locked ? ' locked' : ''}" data-set="${setNum}" data-account="${esc(acctKey)}">
+                                <div class="set-header" style="background-color: ${set.color};">
+                                    <div class="set-num">Set ${setNum}</div>
+                                    <div class="set-name">${esc(set.name)}</div>
+                                    <div class="set-reward">Reward: ${esc(set.reward || "")}</div>
+                                    <div class="progress-bar-bg"><div class="progress-bar-fill" data-role="progress-fill"></div></div>
+                                    <div class="progress-text" data-role="progress-text">0 / 9</div>
+                                    <div class="prestige-lock-pill" data-role="prestige-lock">PRESTIGE LOCKED</div>
+                                </div>
+                                <div class="grid-layout">
+                        `;
 
-                        let starStr = '★'.repeat(stars);
+                        set.cards.forEach((cardName, cIdx) => {
+                            const id = `s${setNum}_${cIdx}`;
+                            const meta = CARD_META[id] || {};
+                            const isGold = !!meta.gold;
+                            const stars = (typeof meta.stars === 'number') ? meta.stars : baseStars;
 
-                        html += `
-                        <div class="card-container" id="card-${id}" data-id="${id}" data-color="${set.color}">
-                            <div class="stars">${starStr}</div>
-                            <div class="sticker-slot ${isGold ? 'gold-card' : ''}" onclick="Manager.updateCard('${id}', 1)">
-                                <div class="placeholder-text">GO!</div>
-                                <div class="banner"><span>${cardName}</span></div>
-                                <div class="counter-badge">+1</div>
-                            </div>
-                            <div class="controls">
-                                <button class="ctrl-btn minus" onclick="event.stopPropagation(); Manager.updateCard('${id}', -1)">-</button>
-                                <button class="ctrl-btn plus" onclick="event.stopPropagation(); Manager.updateCard('${id}', 1)">+</button>
-                            </div>
-                        </div>`;
+                            if (!Manager.cardDb) Manager.cardDb = {};
+                            if (!Manager.cardDb[id]) Manager.cardDb[id] = { id: id, name: cardName, stars: stars, gold: isGold, set: setNum };
+
+                            const starStr = '★'.repeat(stars);
+
+                            const canEdit = !(locked && setNum === 25);
+                            const onclickMain = canEdit ? `onclick="Manager.updateCardForAccount(${JSON.stringify(acctKey)}, '${id}', 1)"` : '';
+                            const onclickMinus = canEdit ? `onclick="event.stopPropagation(); Manager.updateCardForAccount(${JSON.stringify(acctKey)}, '${id}', -1)"` : `onclick="event.stopPropagation();"`;
+                            const onclickPlus = canEdit ? `onclick="event.stopPropagation(); Manager.updateCardForAccount(${JSON.stringify(acctKey)}, '${id}', 1)"` : `onclick="event.stopPropagation();"`;
+
+                            html += `
+                                <div class="card-container" data-id="${id}" data-account="${esc(acctKey)}" data-color="${set.color}">
+                                    <div class="stars">${starStr}</div>
+                                    <div class="sticker-slot ${isGold ? 'gold-card' : ''}" data-action="slot" data-editable="${canEdit ? 1 : 0}">
+                                        <div class="placeholder-text">GO!</div>
+                                        <div class="banner"><span>${esc(cardName)}</span></div>
+                                        <div class="counter-badge">+1</div>
+                                    </div>
+                                    <div class="controls">
+                                        <button class="ctrl-btn minus" data-action="minus" type="button">-</button>
+                                        <button class="ctrl-btn plus" data-action="plus" type="button">+</button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+
+                        html += `</div></div>`;
+                        col.insertAdjacentHTML('beforeend', html);
                     });
 
-                    html += `</div></div>`;
-                    container.innerHTML += html;
+                    container.appendChild(col);
+                });
+
+                // Ensure click handlers and sizing are bound
+                this._ensureAlbumBound();
+
+                // Ensure lock pill visibility matches current prestige flags
+                this.updateAlbumLockState();
+
+                // Update account header stars
+                this._updateAlbumAccountHeaderStats();
+            },
+
+            updateAlbumLockState() {
+                document.querySelectorAll('.album-set[data-set="25"][data-account]').forEach(setEl => {
+                    const acctKey = setEl.getAttribute('data-account');
+                    const acct = (acctKey && this.state.accounts[acctKey]) ? this.state.accounts[acctKey] : null;
+                    const locked = acct ? !acct.prestige : true;
+
+                    setEl.classList.toggle('locked', locked);
+                    const pill = setEl.querySelector('[data-role="prestige-lock"]');
+                    if (pill) pill.style.display = locked ? 'inline-flex' : 'none';
                 });
             },
 
             buildNav() {
                 const nav = document.getElementById('left-nav-content');
+                if (!nav) return;
+
                 nav.innerHTML = '';
+                const a = this._getAlbumCfg();
+
                 SET_DATA.forEach((set, idx) => {
+                    const setNum = idx + 1;
                     const div = document.createElement('div');
-                    div.className = 'nav-item';
+
+                    div.className = 'nav-item' + ((a.mode === 'single' && a.selectedSet === setNum) ? ' active' : '');
                     div.style.borderLeft = `5px solid ${set.color}`;
-                    div.style.color = set.color; // Use text color for visibility
-                    div.innerText = `Set ${idx+1}: ${set.name}`;
+                    div.style.color = set.color;
+                    div.innerText = `Set ${setNum}: ${set.name}`;
+
                     div.onclick = () => {
                         Manager.switchView('view-album');
-                        setTimeout(() => document.getElementById(`set-${idx+1}`).scrollIntoView({behavior:'smooth', block:'center'}), 100);
+                        setTimeout(() => Manager.setAlbumSelectedSet(setNum), 60);
                     };
+
                     nav.appendChild(div);
                 });
             },
+
 
             updateAccountSelector() {
                 const sel = document.getElementById('account-selector');
@@ -1908,6 +2599,8 @@
                 if(viewId === 'view-showroom') { const b = document.getElementById('showroom-notify'); if (b) b.style.display = 'none'; if (typeof Showroom !== 'undefined') { Showroom.render(); Showroom.checkAchievements(true); } }
                 if(viewId === 'view-gameroom' && typeof GameRoom !== 'undefined') { GameRoom.render(); }
                 if(viewId === 'view-accounts' && typeof AccountsBoard !== 'undefined') { AccountsBoard.render(); }
+                this.updateAlbumControls();
+                this.updateUI();
             },
 
             setupTimer() {
@@ -2043,7 +2736,160 @@
                     prizeListEl.innerText = `${ALBUM_COMPLETION_PRIZE.dice.toLocaleString()} Dice • ${ALBUM_COMPLETION_PRIZE.token} • Vault: ${ALBUM_COMPLETION_PRIZE.vault.join(' + ')}`;
                 }
 
-}
+            },
+
+            _computeForAccount(acctKey) {
+                const acct = (Manager.state.accounts && Manager.state.accounts[acctKey]) ? Manager.state.accounts[acctKey] : null;
+                const data = (acct && acct.data) ? acct.data : {};
+                const prestigeOn = !!(acct && acct.prestige);
+
+                let totalEnabled = 0, totalHave = 0;
+                let goldHave = 0, nonGoldHave = 0;
+                let goldTotal = 0;
+                const starsHave = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
+                const starsPossible = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
+
+                for (let id in Manager.cardDb) {
+                    const meta = Manager.cardDb[id];
+                    if (!meta) continue;
+
+                    // Respect Smart enablement / prestige rules when available
+                    if (typeof Smart !== 'undefined' && Smart.isCardEnabledForAccount && !Smart.isCardEnabledForAccount(acctKey, meta)) continue;
+
+                    totalEnabled++;
+                    if (meta.gold) goldTotal++;
+                    const s = meta.stars || 0;
+                    if (starsPossible[s] !== undefined) starsPossible[s]++;
+
+                    if ((data[id] || 0) > 0) {
+                        totalHave++;
+                        if (meta.gold) goldHave++; else nonGoldHave++;
+                        if (starsHave[s] !== undefined) starsHave[s]++;
+                    }
+                }
+
+                const setRows = [];
+                SET_DATA.forEach((set, sIdx) => {
+                    const setNum = sIdx + 1;
+                    if (!prestigeOn && setNum === 25) return;
+                    let collected = 0;
+                    for (let cIdx = 0; cIdx < set.cards.length; cIdx++) {
+                        const id = `s${setNum}_${cIdx}`;
+                        if ((data[id] || 0) > 0) collected++;
+                    }
+                    const missing = Math.max(0, 9 - collected);
+                    setRows.push({ setNum, name: set.name, reward: set.reward || '', collected, missing, pct: (collected / 9 * 100) });
+                });
+
+                const remaining = Math.max(0, totalEnabled - totalHave);
+                const nonGoldTotal = Math.max(0, totalEnabled - goldTotal);
+
+                return { acctKey, prestigeOn, totalEnabled, totalHave, goldHave, nonGoldHave, goldTotal, nonGoldTotal, remaining, starsHave, starsPossible, setRows };
+            },
+
+            renderCompare() {
+                const wrap = document.getElementById('stats-container');
+                if (!wrap) return;
+
+                const keys = Manager._getOrderedSelectedAccounts('stats');
+                if (!keys.length) {
+                    wrap.innerHTML = '<div style="color:white; padding:12px; font-weight:900;">Add accounts to compare.</div>';
+                    return;
+                }
+
+                const esc = Manager.esc.bind(Manager);
+
+                wrap.innerHTML = keys.map(acctKey => {
+                    const cfg = Manager._getCompareCfg('stats');
+                    const pinned = cfg.pinnedAccount === acctKey;
+                    const s = this._computeForAccount(acctKey);
+
+                    const pctTotal = s.totalEnabled ? (s.totalHave / s.totalEnabled * 100) : 0;
+                    const pctGold = s.goldTotal ? (s.goldHave / s.goldTotal * 100) : 0;
+                    const pctNon = s.nonGoldTotal ? (s.nonGoldHave / s.nonGoldTotal * 100) : 0;
+
+                    const starCards = Object.keys(s.starsPossible).map(k => parseInt(k,10)).filter(i => s.starsPossible[i] > 0).map(i => {
+                        const possible = s.starsPossible[i];
+                        const have = s.starsHave[i] || 0;
+                        const pct = possible ? (have / possible * 100) : 0;
+                        return `
+                            <div class="stat-card">
+                                <div class="stat-title">${i} Star Completion</div>
+                                <div class="stat-value">${have} / ${possible}</div>
+                                <div class="stat-bar-container"><div class="stat-bar" style="width:${pct}%; background:hsl(${i*40}, 70%, 50%)"></div></div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    const setCards = s.setRows.map(r => `
+                        <div class="stat-card">
+                            <div class="stat-title">Set ${r.setNum}: ${esc(r.name)}</div>
+                            <div class="stat-value">${r.collected} / 9  (${r.missing} missing)</div>
+                            <div class="stat-bar-container"><div class="stat-bar" style="width:${r.pct}%;"></div></div>
+                            <div style="font-size:12px; font-weight:700; color:#eee; opacity:0.9; margin-top:8px;">
+                                Reward: ${esc(r.reward || '')}
+                            </div>
+                        </div>
+                    `).join('');
+
+                    let prizeLine = '';
+                    if (typeof ALBUM_COMPLETION_PRIZE !== 'undefined') {
+                        try {
+                            prizeLine = `${ALBUM_COMPLETION_PRIZE.dice.toLocaleString()} Dice • ${ALBUM_COMPLETION_PRIZE.token} • Vault: ${ALBUM_COMPLETION_PRIZE.vault.join(' + ')}`;
+                        } catch(e) {}
+                    }
+
+                    return `
+                        <div class="album-account-col${pinned ? ' pinned' : ''}" data-account="${esc(acctKey)}">
+                            ${Manager._buildCompareAcctHeader(acctKey, 'stats')}
+                            <div style="display:flex; flex-direction:column; gap:16px;">
+                                <div class="stats-grid">
+                                    <div class="stat-card">
+                                        <div class="stat-title">Album Completion</div>
+                                        <div class="stat-value">${s.totalHave} / ${s.totalEnabled}</div>
+                                        <div class="stat-bar-container"><div class="stat-bar" style="width:${pctTotal}%;"></div></div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-title">Gold Stickers</div>
+                                        <div class="stat-value">${s.goldHave} / ${s.goldTotal}</div>
+                                        <div class="stat-bar-container"><div class="stat-bar" style="width:${pctGold}%; background: linear-gradient(90deg, #ffd700, #ffb300);"></div></div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-title">Non-Gold Stickers</div>
+                                        <div class="stat-value">${s.nonGoldHave} / ${s.nonGoldTotal}</div>
+                                        <div class="stat-bar-container"><div class="stat-bar" style="width:${pctNon}%; background: linear-gradient(90deg, #2196f3, #64b5f6);"></div></div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 style="color:white; margin:0 0 10px 0;">Star Breakdown</h3>
+                                    <div class="stats-grid">${starCards}</div>
+                                </div>
+
+                                <div>
+                                    <h3 style="color:white; margin:0 0 10px 0;">Set Rewards Tracker</h3>
+                                    <div class="stats-grid">${setCards}</div>
+                                </div>
+
+                                <div>
+                                    <h3 style="color:white; margin:0 0 10px 0;">Complete Album Prize</h3>
+                                    <div class="stats-grid">
+                                        <div class="stat-card">
+                                            <div class="stat-title">Album Completion Prize</div>
+                                            <div class="stat-value">${s.remaining} sticker${s.remaining===1?'':'s'} remaining</div>
+                                            <div style="font-size:12px; font-weight:700; color:#eee; opacity:0.9; margin-top:8px;">
+                                                ${esc(prizeLine || '')}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                try { Manager._updateAlbumAccountHeaderStats(); } catch(e) {}
+            }
         };
 
         const Vault = {
@@ -2079,8 +2925,84 @@
                 if(confirm("Collect Rewards? Note: This app won't auto-deduct stars because you need to choose specific cards to trash. Please go to the Album tab and reduce duplicate counts manually.")) {
                     Notify.show("Don't forget to update your inventory!", 'success');
                 }
+            },
+
+            _starsForAccount(acctKey) {
+                return Manager._computeVaultStarsForAccount(acctKey);
+            },
+
+            clickVaultForAccount(acctKey, cost) {
+                const current = this._starsForAccount(acctKey);
+                if (current < cost) {
+                    Notify.show("Not enough stars yet!", 'warning');
+                    return;
+                }
+
+                if (confirm(`Use ${cost} stars from ${acctKey}?\n\nThis is a reminder only — the app will not auto-deduct your stars.`)) {
+                    Notify.show("Don't forget to update your inventory!", 'success');
+                }
+            },
+
+            renderCompare() {
+                const wrap = document.getElementById('vault-container');
+                if (!wrap) return;
+
+                const keys = Manager._getOrderedSelectedAccounts('vault');
+                if (!keys.length) {
+                    wrap.innerHTML = '<div style="color:white; padding:12px; font-weight:900;">Add accounts to compare.</div>';
+                    return;
+                }
+
+                const esc = Manager.esc.bind(Manager);
+
+                wrap.innerHTML = keys.map(acctKey => {
+                    const cfg = Manager._getCompareCfg('vault');
+                    const pinned = cfg.pinnedAccount === acctKey;
+                    const stars = this._starsForAccount(acctKey);
+
+                    const n250 = stars >= 250 ? 1 : 0;
+                    const n450 = stars >= 450 ? 2 : 0;
+                    const n700 = stars >= 700 ? 3 : 0;
+                    const n1150 = stars >= 1150 ? '!' : '';
+
+                    return `
+                        <div class="album-account-col${pinned ? ' pinned' : ''}" data-account="${esc(acctKey)}">
+                            ${Manager._buildCompareAcctHeader(acctKey, 'vault')}
+                            <div class="vault-container">
+                                <div class="vault-header">Stickers for Rewards</div>
+                                <div class="star-count">
+                                    <span class="star-icon">★</span>
+                                    <span>${stars}</span>
+                                </div>
+                                <p style="color:#666; font-weight:bold;">Exchange duplicate Sticker Stars for rewards!</p>
+
+                                <div class="vaults-grid">
+                                    <div class="vault-box v-orange" onclick="Vault.clickVaultForAccount(${JSON.stringify(acctKey)}, 250)">
+                                        <div class="notification-bubble nb-red" style="display:${n250? 'flex':'none'};">1</div>
+                                        <div class="vault-emoji">🟠⭐</div>
+                                        <div class="vault-cost">★ 250</div>
+                                    </div>
+                                    <div class="vault-box v-blue" onclick="Vault.clickVaultForAccount(${JSON.stringify(acctKey)}, 450)">
+                                        <div class="notification-bubble nb-red" style="display:${n450? 'flex':'none'};">2</div>
+                                        <div class="vault-emoji">🔵⭐</div>
+                                        <div class="vault-cost">★ 450</div>
+                                    </div>
+                                    <div class="vault-box v-gold" onclick="Vault.clickVaultForAccount(${JSON.stringify(acctKey)}, 700)">
+                                        <div class="notification-bubble nb-red" style="display:${n700? 'flex':'none'};">3</div>
+                                        <div class="notification-bubble nb-gold" style="display:${n1150? 'flex':'none'};">!</div>
+                                        <div class="vault-emoji">🟡⭐</div>
+                                        <div class="vault-cost">★ 700</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                try { Manager._updateAlbumAccountHeaderStats(); } catch(e) {}
             }
         };
+
 
 
 
@@ -2808,19 +3730,19 @@
     .btn.primary { background:#ff6f00; color:#fff; }
     .accounts-board-shell { position:relative; margin-top:14px; }
     .accounts-board { display:flex; gap:16px; overflow-x:auto; padding: 14px 8px; }
-    .board-scroll-btn { position:absolute; top: 50%; transform: translateY(-50%); width:38px; height:38px; border:none; border-radius:999px; background: rgba(255,255,255,0.92); box-shadow: 0 10px 25px rgba(0,0,0,0.25); cursor:pointer; font-weight:1000; }
+    .board-scroll-btn { position:absolute; top: 50%; transform: translateY(-50%); width:38px; height:38px; border:none; border-radius:999px; background: rgba(255,255,255,0.92); box-shadow: 0 10px 25px rgba(0,0,0,0.25); cursor:pointer; font-weight:900; }
     .board-scroll-btn.left { left: -10px; }
     .board-scroll-btn.right { right: -10px; }
     .acct-board-card { min-width: 340px; background:#ffffff; border-radius:18px; padding:14px; box-shadow: 0 10px 25px rgba(0,0,0,0.18); border:2px solid #eee; flex: 0 0 auto; }
-    .acct-board-title { font-weight: 1000; font-size:18px; color:#333; display:flex; justify-content:space-between; align-items:center; gap:10px; }
-    .acct-pill { font-size:10px; font-weight:1000; padding:3px 8px; border-radius:999px; background:#f0f0f0; color:#333; border:1px solid #e2e2e2; }
+    .acct-board-title { font-weight: 900; font-size:18px; color:#333; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .acct-pill { font-size:10px; font-weight:900; padding:3px 8px; border-radius:999px; background:#f0f0f0; color:#333; border:1px solid #e2e2e2; }
     .acct-board-row { margin-top:8px; font-size:12px; color:#333; }
     .acct-board-row a { color:#1565c0; text-decoration: underline; }
     .near-sets { margin-top:10px; background:#fafafa; border:1px solid #eee; border-radius:14px; padding:10px; }
     .near-sets h4 { margin:0 0 8px 0; font-size:12px; color:#333; }
     .near-set { margin-bottom:10px; }
     .near-set:last-child { margin-bottom:0; }
-    .near-set-name { font-weight:1000; font-size:12px; color:#333; }
+    .near-set-name { font-weight:900; font-size:12px; color:#333; }
     .missing-list { margin:6px 0 0 16px; padding:0; font-size:12px; color:#555; }
     .acct-qr-mini { width:64px; height:64px; border-radius:14px; border:1px solid #eee; background:#fff; padding:4px; object-fit: contain; }
 </style>
@@ -2978,7 +3900,7 @@
                             <span style="width:1px; height:18px; background:#e9e9e9; display:inline-block; margin:0 4px;"></span>
                             <span style="display:flex; align-items:center; gap:6px;">
                                 <input type="checkbox" ${qrChecked} onchange="AccountsBoard.draftSetShowQR(${JSON.stringify(k)}, this.checked)">
-                                <span style="font-size:11px; font-weight:1000; color:#777;">QR</span>
+                                <span style="font-size:11px; font-weight:900; color:#777;">QR</span>
                             </span>
                         </label>
                     `;
@@ -3155,7 +4077,7 @@ const Blitz =
                     return `
                         <div class="blitz-card ${sel}" onclick="Blitz.toggle('${meta.id}')">
                             <div style="display:flex; flex-direction:column; gap:4px;">
-                                <div style="font-weight:1000; color:#333;">${meta.name}</div>
+                                <div style="font-weight:900; color:#333;">${meta.name}</div>
                                 <div style="font-size:12px; font-weight:900; color:#666;">Set ${meta.set} • ${meta.stars}★</div>
                             </div>
                             <div class="blitz-pill gold">Gold</div>
@@ -5239,8 +6161,8 @@ planDays.push({ date: day, sends: daySends });
                 items.sort((x,y)=> (y.meta.stars - x.meta.stars) || x.meta.name.localeCompare(y.meta.name));
 
                 const li = items.slice(0, 18).map(it => {
-                    const flag = it.completesSet ? ` <span style="color:#2e7d32; font-weight:1000;">✅ completes Set ${it.meta.set}</span>` : '';
-                    const g = it.meta.gold ? ` <span style="color:gold; font-weight:1000;">🥇</span>` : '';
+                    const flag = it.completesSet ? ` <span style="color:#2e7d32; font-weight:900;">✅ completes Set ${it.meta.set}</span>` : '';
+                    const g = it.meta.gold ? ` <span style="color:gold; font-weight:900;">🥇</span>` : '';
                     return `<li>${this.esc(it.meta.name)} <span style="color:#666;">(${it.meta.stars}★)</span>${g}${flag}</li>`;
                 }).join('');
                 const extra = items.length - Math.min(items.length, 18);
@@ -6821,6 +7743,45 @@ const Showroom = {
                 }).join('');
             },
 
+renderCompare() {
+    const wrap = document.getElementById('showroom-container');
+    if (!wrap) return;
+
+    const keys = Manager._getOrderedSelectedAccounts('showroom');
+    const { groups } = this.computeEarnedKeys();
+
+    const byGroup = {};
+    groups.forEach(g => { byGroup[g.group] = g; });
+
+    const esc = Manager.esc.bind(Manager);
+
+    const cols = keys.map(acctKey => {
+        const g = byGroup[acctKey] || { group: acctKey, items: [] };
+
+        const grid = (g.items || []).map(t => `
+            <div class="trophy ${t.earned ? 'earned' : 'locked'}" title="${esc(t.hint || t.name)}">
+                <div class="trophy-icon">${t.icon}</div>
+                <div class="trophy-name">${esc(t.name)}</div>
+            </div>
+        `).join('');
+
+        const cfg = Manager._getCompareCfg('showroom');
+        const pinned = cfg.pinnedAccount === acctKey;
+
+        return `
+            <div class="album-account-col${pinned ? ' pinned' : ''}" data-account="${esc(acctKey)}">
+                ${Manager._buildCompareAcctHeader(acctKey, 'showroom')}
+                <div class="trophy-group">
+                    <div class="trophy-group-title">🏷️ ${esc(g.group || acctKey)} <span style="opacity:0.6; font-size:12px;">(${(g.items||[]).filter(x=>x.earned).length}/${(g.items||[]).length})</span></div>
+                    <div class="trophy-grid">${grid || '<div style="color:#ddd; font-weight:800; padding:10px;">No trophies yet.</div>'}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    wrap.innerHTML = cols || '<div style="color:#ddd; font-weight:900; padding: 20px;">Add another account to compare trophies.</div>';
+    try { Manager._updateAlbumAccountHeaderStats(); } catch(e) {}
+},
             checkAchievements(silent=false) {
                 if (!Manager.state.accounts) return;
                 if (!this.earned || !(this.earned instanceof Set)) this.init();
@@ -7036,7 +7997,7 @@ const Showroom = {
                         <div style="display:flex; gap:10px; align-items:center; margin-top:10px;">
                             <button class="btn-mini" onclick="GameRoom._diceRoll()">ROLL</button>
                             <div id="gr-dice-face" style="font-size:42px;">⚀</div>
-                            <div id="gr-dice-meta" style="font-weight:1000;"></div>
+                            <div id="gr-dice-meta" style="font-weight:900;"></div>
                         </div>
                         <div class="gr-sub" style="margin-top:10px;">History: <span id="gr-dice-hist"></span></div>
                     </div>
@@ -7189,6 +8150,74 @@ const Showroom = {
                 if (!fromTile) Notify.show(`Neon Mode: ${Manager.state.settings.neonMode ? 'ON' : 'OFF'}`, "success");
                 // Refresh game room visuals
                 this.render();
+            },
+
+            renderCompare() {
+                const wrap = document.getElementById('showroom-container');
+                if (!wrap) return;
+
+                const keys = Manager._getOrderedSelectedAccounts('showroom');
+                const { groups } = this.computeEarnedKeys();
+
+                const byGroup = {};
+                groups.forEach(g => { byGroup[g.group] = g; });
+
+                const esc = Manager.esc.bind(Manager);
+
+                const globalGroup = byGroup['__global__'];
+                const globalGrid = globalGroup ? globalGroup.items.map(t => `
+                    <div class="trophy ${t.earned ? 'earned' : 'locked'}" title="${esc(t.hint || t.name)}">
+                        <div class="trophy-icon">${t.icon}</div>
+                        <div class="trophy-name">${esc(t.name)}</div>
+                    </div>
+                `).join('') : '';
+
+                const globalCol = globalGroup ? `
+                    <div class="album-account-col" data-account="__global__">
+                        <div class="album-acct-header">
+                            <div class="album-acct-top">
+                                <div class="album-acct-title">
+                                    <span class="album-acct-name">Global</span>
+                                    <span class="acct-pill" style="background:#455a64; color:white; border:none; padding:2px 6px; font-size:10px;">ALL</span>
+                                </div>
+                            </div>
+                            <div class="album-acct-meta">
+                                <span class="album-acct-chip">🏆 Achievements across all accounts</span>
+                            </div>
+                        </div>
+
+                        <div class="trophy-group">
+                            <div class="trophy-group-title">🏷️ Global <span style="opacity:0.6; font-size:12px;">(${globalGroup.items.filter(x=>x.earned).length}/${globalGroup.items.length})</span></div>
+                            <div class="trophy-grid">${globalGrid}</div>
+                        </div>
+                    </div>
+                ` : '';
+
+                const cols = keys.map(acctKey => {
+                    const g = byGroup[acctKey] || { group: acctKey, items: [] };
+                    const grid = g.items.map(t => `
+                        <div class="trophy ${t.earned ? 'earned' : 'locked'}" title="${esc(t.hint || t.name)}">
+                            <div class="trophy-icon">${t.icon}</div>
+                            <div class="trophy-name">${esc(t.name)}</div>
+                        </div>
+                    `).join('');
+
+                    const cfg = Manager._getCompareCfg('showroom');
+                    const pinned = cfg.pinnedAccount === acctKey;
+
+                    return `
+                        <div class="album-account-col${pinned ? ' pinned' : ''}" data-account="${esc(acctKey)}">
+                            ${Manager._buildCompareAcctHeader(acctKey, 'showroom')}
+                            <div class="trophy-group">
+                                <div class="trophy-group-title">🏷️ ${esc(acctKey)} <span style="opacity:0.6; font-size:12px;">(${g.items.filter(x=>x.earned).length}/${g.items.length})</span></div>
+                                <div class="trophy-grid">${grid || '<div style="color:#ddd; font-weight:800; padding:10px;">No trophies yet.</div>'}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                wrap.innerHTML = `${globalCol}${cols}`;
+                try { Manager._updateAlbumAccountHeaderStats(); } catch(e) {}
             }
         };
 
@@ -7204,6 +8233,7 @@ const Showroom = {
 
 document.addEventListener('DOMContentLoaded', () => {
             Manager.init();
+            try { document.body.classList.toggle('album-compare', (function(){ const v = document.getElementById('view-album'); return v && v.classList.contains('active'); })()); } catch(e) {}
             if (typeof Showroom !== 'undefined') {
                 Showroom.init();
                 Showroom.checkAchievements(true);

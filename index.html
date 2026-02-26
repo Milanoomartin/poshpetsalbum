@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Monopoly Go! Posh Pets Album Tracker</title>
+    <title>Monopoly Go! Posh Pet Sticker Album Tracker</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Pacifico&display=swap');
@@ -146,6 +146,38 @@
         .ctrl-btn { background: #fff; border: 1px solid #ccc; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-weight: bold; }
         .counter-badge { position: absolute; top: 5px; right: 5px; background: #ff4081; color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; display: none; z-index: 10; }
 
+
+        /* Quick duplicate input (optional) */
+        .dupe-input{
+            width: 46px;
+            height: 20px;
+            border-radius: 10px;
+            border: 1px solid #cfcfcf;
+            font-size: 11px;
+            font-weight: 900;
+            text-align: center;
+            background: rgba(255,255,255,0.95);
+            color:#222;
+            display:none;
+            padding:0;
+        }
+        body.quick-edit-dupes .dupe-input{ display:inline-block; }
+        body.quick-edit-dupes .controls{ opacity: 1; }
+
+        .mini-toggle{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            padding:4px 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.18);
+            font-size:12px;
+            font-weight:900;
+            color:#fff;
+        }
+        .mini-toggle input{ accent-color:#ff4081; }
+        .mini-toggle span{ opacity:0.95; }
         /* --- NEW STYLES FOR SUITE --- */
         
         /* Right Sidebar */
@@ -372,7 +404,7 @@
         .smart-mdp .planout { margin-top:12px; display:flex; flex-direction:column; gap:10px; }
         .smart-mdp .plan-card { background:#f7f7f7; border:1px solid #eee; border-radius:14px; padding:12px; }
         .smart-mdp .plan-head { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; }
-        .smart-mdp .plan-title { font-weight:1100; color:#333; }
+        .smart-mdp .plan-title { font-weight:900; color:#333; }
         .smart-mdp .plan-meta { font-size:12px; font-weight:900; color:#666; margin-top:6px; }
         .smart-mdp .chips { margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; }
         .smart-mdp .chip { font-size:11px; font-weight:900; padding:4px 10px; border-radius:999px; background:white; border:1px solid #e5e5e5; }
@@ -394,7 +426,7 @@
     border: 1px solid rgba(255,255,255,0.10);
 }
 .trophy-group-title {
-    font-weight: 1100;
+    font-weight:900;
     color: #fff;
     opacity: 0.95;
     margin-bottom: 10px;
@@ -428,7 +460,7 @@
     border-radius: 999px;
     padding: 1px 6px;
     font-size: 10px;
-    font-weight: 1100;
+    font-weight:900;
     border: 1px solid rgba(0,0,0,0.2);
 }
 .trophy.locked { opacity: 0.38; filter: grayscale(0.35); }
@@ -475,7 +507,7 @@
     display: flex;
     gap: 10px;
     align-items: center;
-    font-weight: 1100;
+    font-weight:900;
     color: #fff;
 }
 #view-gameroom .game-icon { font-size: 22px; }
@@ -489,7 +521,7 @@
     border: 1px solid rgba(255,255,255,0.15);
     border-radius: 999px;
     padding: 6px 10px;
-    font-weight: 1100;
+    font-weight:900;
     font-size: 11px;
     color: rgba(255,255,255,0.92);
 }
@@ -521,7 +553,7 @@
     padding-bottom: 10px;
     border-bottom: 1px solid rgba(255,255,255,0.08);
 }
-#view-gameroom .game-modal-title { font-weight: 1200; font-size: 16px; }
+#view-gameroom .game-modal-title { font-weight:900; font-size: 16px; }
 #view-gameroom .gr-mini {
     background: rgba(0,0,0,0.35);
     border: 1px solid rgba(255,255,255,0.10);
@@ -546,7 +578,7 @@
 }
 #view-gameroom .gr-tile.revealed { background: rgba(125,249,255,0.08); border-color: rgba(125,249,255,0.22); }
 #view-gameroom .gr-tile.matched { background: rgba(0,255,150,0.12); border-color: rgba(0,255,150,0.22); cursor: default; }
-#view-gameroom .gr-title { font-weight: 1100; }
+#view-gameroom .gr-title { font-weight:900; }
 #view-gameroom .gr-sub { opacity: 0.85; margin-top: 4px; font-size: 12px; }
 
 .theme-neon #view-gameroom .game-card { box-shadow: 0 0 22px rgba(125,249,255,0.20), 0 16px 50px rgba(0,0,0,0.45); }
@@ -600,6 +632,58 @@
             .main-container, .planner-container { margin-left: 0; margin-right: 0; }
         }
 
+    
+        /* --- Calendar Send Planner (integrated) --- */
+        .cp-controls{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:14px; margin-top:12px; }
+        @media(max-width:980px){ .cp-controls{ grid-template-columns:1fr; } }
+        .cp-card{ background:white; border-radius:18px; padding:14px; border:1px solid #eee; box-shadow:0 8px 18px rgba(0,0,0,0.12);}
+        .cp-section-title{ font-weight:900; color:#444; margin-bottom:8px;}
+        .cp-list{ display:flex; flex-direction:column; gap:8px; max-height:220px; overflow:auto; padding-right:4px;}
+        .cp-row{ display:flex; justify-content:space-between; align-items:center; gap:10px; background:#f9f9f9; border-radius:12px; padding:8px 10px;}
+        .cp-row .left{ display:flex; flex-direction:column; min-width:0;}
+        .cp-row .name{ font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+        .cp-row .meta{ font-size:11px; font-weight:800; color:#666; }
+        .cp-check{ display:flex; align-items:center; gap:8px; font-weight:900; font-size:12px; color:#555; }
+        .cp-actions{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; margin-top:10px;}
+        .cp-summary{ margin-top:12px; background:#fff; border-radius:18px; padding:12px 14px; border:1px solid #eee; font-weight:900; color:#444;}
+        .cp-calendar{ margin-top:12px; background:#fff; border-radius:18px; padding:12px; border:1px solid #eee;}
+        .cp-dow{ display:grid; grid-template-columns: repeat(7, 1fr); gap:10px; margin-bottom:8px; }
+        .cp-dow div{ text-align:center; font-weight:900; color:#777; font-size:12px;}
+        .cp-grid{ display:grid; grid-template-columns: repeat(7, 1fr); gap:10px;}
+        .cp-daytile{ border-radius:16px; padding:10px; background:#fcfbf4; border:2px solid #f0eee2; cursor:pointer; min-height:92px; position:relative; transition: 0.12s; }
+        .cp-daytile:hover{ filter:brightness(0.98); transform: translateY(-1px); }
+        .cp-daynum{ font-weight:900; font-size:12px; color:#444; }
+        .cp-badges{ margin-top:6px; display:flex; flex-direction:column; gap:4px;}
+        .cp-badge{ font-size:10px; font-weight:900; border-radius:999px; padding:3px 8px; width:fit-content; background:#eee; color:#333;}
+        .cp-badge.complete{ background:#ff4081; color:white;}
+        .cp-badge.set{ background:#455a64; color:white;}
+        .cp-badge.done{ background:#2e7d32; color:white;}
+        .cp-progress{ position:absolute; right:8px; top:8px; font-size:10px; font-weight:900; color:#666; background:rgba(0,0,0,0.04); padding:2px 6px; border-radius:999px;}
+
+        .cp-daypanel{ margin-top:12px; background:#fff; border-radius:18px; padding:12px 14px; border:1px solid #eee;}
+        .cp-daytitle{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
+        .cp-sends{ margin-top:10px; display:flex; flex-direction:column; gap:8px;}
+        .cp-send{ display:flex; gap:10px; align-items:flex-start; padding:10px; border-radius:14px; background:#f9f9f9; border:1px solid #eee;}
+        .cp-send.done{ background:#e8f5e9; border-color:#c8e6c9;}
+        .cp-send input{ margin-top:3px;}
+        .cp-send-main{ flex:1; min-width:0;}
+        .cp-send-line{ font-weight:900; color:#333; }
+        .cp-send-sub{ font-size:11px; font-weight:800; color:#666; margin-top:2px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+        .cp-chip{ border-radius:999px; padding:3px 8px; font-size:10px; font-weight:900; color:white; }
+        .cp-chip.setname{ color:#111; background:#ffd54f; }
+        .cp-chip.sticker{ background:#ff4081; color:white; }
+        .cp-chip.reward{ background:#455a64; color:white; }
+
+        .cp-matrix{ margin-top:12px; overflow:auto; border-radius:14px; border:1px solid #eee; }
+        .cp-matrix table{ width:100%; border-collapse:collapse; }
+        .cp-matrix th, .cp-matrix td{ padding:6px 8px; border-bottom:1px solid #eee; text-align:center; font-weight:900; font-size:12px;}
+        .cp-matrix th{ background:#fafafa; position: sticky; top:0;}
+        .cp-matrix .rowh{ text-align:left; }
+
+        .cp-celebrate{ position:fixed; inset:0; pointer-events:none; z-index:2000; display:none; }
+        .cp-confetti{ position:absolute; width:8px; height:14px; border-radius:4px; opacity:0.95; animation: cp-fall 1.6s linear forwards; }
+        @keyframes cp-fall{ from{ transform: translateY(-20px) rotate(0deg); } to{ transform: translateY(110vh) rotate(540deg); } }
+
     </style>
 </head>
 <body>
@@ -636,6 +720,10 @@
                 <button class="btn-mini" id="album-mode-scroll-btn" onclick="Manager.setAlbumMode('scroll')">Scroll Down</button>
                 <button class="btn-mini" id="album-mode-single-btn" onclick="Manager.setAlbumMode('single')">Single Set</button>
                 <span id="album-mode-set-pill" class="acct-pill" style="display:none;">Set 1</span>
+                <label class="mini-toggle" title="Type duplicate counts (keeps +/- too)">
+                    <input id="album-quickedit-toggle" type="checkbox" onchange="Manager.setQuickEditDupes(this.checked)">
+                    <span>Type dupes</span>
+                </label>
             </div>
         </div>
     </div>
@@ -706,6 +794,9 @@
 </div>
         <div class="right-nav-item" onclick="Manager.switchView('view-smart', this)">
             <div class="r-icon">🧠</div><div class="r-text">Smart Trades</div>
+        </div>
+        <div class="right-nav-item" onclick="Manager.switchView('view-calendar', this)">
+            <div class="r-icon">📅</div><div class="r-text">Send Calendar <span id="calplan-notify" class="notify-bubble" style="display:none;">0</span></div>
         </div>
          <div class="right-nav-item" onclick="Manager.switchView('view-import', this)">
             <div class="r-icon">📥</div><div class="r-text">Import</div>
@@ -1054,6 +1145,85 @@
         </div>
     </div>
 </div>
+
+
+<div id="view-calendar" class="app-view">
+    <div class="planner-container">
+        <h2 style="margin:0;">📅 Send Calendar Planner</h2>
+        <p style="color:#666; font-weight:800; margin-top:6px;">
+            Generate a day-by-day send plan using your <span style="color:#ff4081;">current</span> Sticker Wizard data — no imports needed.
+        </p>
+
+        <div class="cp-controls">
+            <div class="cp-card">
+                <div class="cp-section-title">🎯 Target Accounts</div>
+                <div style="font-size:11px; font-weight:800; color:#777; margin-bottom:8px;">
+                    Default goal = the <b>max feasible</b> unique stickers you can reach using duplicates from your selected senders.
+                </div>
+                <div id="cp-targets" class="cp-list"></div>
+            </div>
+
+            <div class="cp-card">
+                <div class="cp-section-title">📤 Sender Accounts</div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
+                    <label class="cp-check"><input type="checkbox" id="cp-senders-all" checked onchange="CalendarPlanner.toggleAllSenders(this.checked)">Use all accounts</label>
+                    <label class="cp-check"><input type="checkbox" id="cp-include-targets" checked onchange="CalendarPlanner.renderLists()">Targets can also send</label>
+                </div>
+                <div id="cp-senders" class="cp-list"></div>
+            </div>
+
+            <div class="cp-card">
+                <div class="cp-section-title">⚙️ Plan Settings</div>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <label class="cp-check">Strategy
+                        <select id="cp-strategy" style="margin-left:8px; padding:6px 8px; border-radius:12px; border:1px solid #ddd;">
+                            <option value="sets" selected>Complete Sets First</option>
+                            <option value="balanced">Balanced</option>
+                            <option value="random">Randomized</option>
+                        </select>
+                    </label>
+
+                    <label class="cp-check">Mode
+                        <select id="cp-mode" style="margin-left:8px; padding:6px 8px; border-radius:12px; border:1px solid #ddd;">
+                            <option value="sequential" selected>Finish closest target first</option>
+                            <option value="parallel">Parallel (spread daily)</option>
+                        </select>
+                    </label>
+
+                    <label class="cp-check">Start date
+                        <input id="cp-start" type="date" style="margin-left:8px; padding:6px 8px; border-radius:12px; border:1px solid #ddd;">
+                    </label>
+
+                    <label class="cp-check">Max days to plan
+                        <input id="cp-maxdays" type="number" min="1" max="90" value="30" style="margin-left:8px; width:90px; padding:6px 8px; border-radius:12px; border:1px solid #ddd;">
+                    </label>
+
+                    <label class="cp-check"><input id="cp-allow-gold" type="checkbox">Include gold stickers (only if tradable)</label>
+                    <label class="cp-check"><input id="cp-allow-sacrifice" type="checkbox">Allow sending single copies (sacrifices)</label>
+                    <label class="cp-check">Keep donors above
+                        <input id="cp-donor-min" type="number" min="0" max="216" value="180" style="margin-left:8px; width:90px; padding:6px 8px; border-radius:12px; border:1px solid #ddd;">
+                        unique (when sacrificing)
+                    </label>
+
+                    <label class="cp-check"><input id="cp-sounds" type="checkbox" checked>Sounds + celebrations</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="cp-actions">
+            <button class="btn btn-primary" onclick="CalendarPlanner.generate()">Generate Plan</button>
+            <button class="btn" onclick="CalendarPlanner.refresh()">Refresh from current data</button>
+            <button class="btn" style="background:#ff4081; color:white;" onclick="CalendarPlanner.clear()">Clear</button>
+        </div>
+
+        <div id="cp-summary" class="cp-summary" style="display:none;"></div>
+        <div id="cp-calendar" class="cp-calendar" style="display:none;"></div>
+        <div id="cp-daypanel" class="cp-daypanel" style="display:none;"></div>
+    </div>
+
+    <div class="cp-celebrate" id="cp-celebrate"></div>
+</div>
+
 
 <div id="view-import" class="app-view">
         <div class="import-area">
@@ -1410,6 +1580,8 @@
 
             init() {
                 this.loadData();
+                this.ensureCardDb();
+                this._ensureGlobalBound();
                 this.buildAlbumUI();
                 this.buildNav();
                 this.updateAccountSelector();
@@ -1428,6 +1600,34 @@
                     try { this.setAccountBar(); } catch(e) {}
                     setTimeout(() => this.openAccountModal('add'), 50);
                 }
+            },
+
+            // Build the sticker metadata database (names, stars, gold, set) once at startup.
+            // Many modules (Stats/Vault/Planner) rely on this even if the Album view hasn't been rendered yet.
+            ensureCardDb() {
+                if (this.cardDb && typeof this.cardDb === 'object' && Object.keys(this.cardDb).length > 0) {
+                    Manager.cardDb = this.cardDb;
+                    return;
+                }
+                const db = {};
+                const baseStarsForSet = (setNum) => (setNum <= 2 ? 1 : setNum <= 6 ? 2 : setNum <= 10 ? 3 : setNum <= 15 ? 4 : 5);
+
+                for (let s = 1; s <= SET_DATA.length; s++) {
+                    const set = SET_DATA[s - 1];
+                    if (!set || !Array.isArray(set.cards)) continue;
+                    const baseStars = baseStarsForSet(s);
+                    for (let i = 0; i < set.cards.length; i++) {
+                        const id = `s${s}_${i}`;
+                        const name = set.cards[i];
+                        const m = (typeof CARD_META === 'object' && CARD_META && CARD_META[id]) ? CARD_META[id] : {};
+                        const stars = (typeof m.stars === 'number') ? m.stars : baseStars;
+                        const gold = !!m.gold;
+                        db[id] = { id, name, stars, gold, set: s };
+                    }
+                }
+
+                this.cardDb = db;
+                Manager.cardDb = db;
             },
 
             // --- Persistence & Migration ---
@@ -1460,6 +1660,8 @@
                 if (!('mode' in this.state.settings.album)) this.state.settings.album.mode = 'scroll';
                 if (!('selectedSet' in this.state.settings.album)) this.state.settings.album.selectedSet = 1;
                 if (!('pinnedAccount' in this.state.settings.album)) this.state.settings.album.pinnedAccount = null;
+                if (typeof this.state.settings.quickEditDupes !== 'boolean') this.state.settings.quickEditDupes = false;
+
 
 
                 // Migration from older single-account storage (if present)
@@ -1554,6 +1756,19 @@
                     _migratedTradesUsed: null
                 };
 
+                // Keep global account order/filter stable
+                try {
+                    if (!this.state.settings) this.state.settings = {};
+                    if (!this.state.settings.accountsBoard || typeof this.state.settings.accountsBoard !== 'object') {
+                        this.state.settings.accountsBoard = { selected: {}, nearMax: {}, showQR: {}, order: [], userCustomized: false };
+                    }
+                    const cfg = this.state.settings.accountsBoard;
+                    if (!Array.isArray(cfg.order)) cfg.order = [];
+                    if (!cfg.order.includes(name)) cfg.order.push(name);
+                    if (!cfg.selected || typeof cfg.selected !== 'object') cfg.selected = {};
+                    if (cfg.selected[name] === undefined) cfg.selected[name] = cfg.userCustomized ? false : true;
+                } catch(e) {}
+
                 if (doSave) this.saveData();
                 return true;
             },
@@ -1574,6 +1789,17 @@
                 
                 // Keep Account Board settings stable across rename
                 try { if (typeof AccountsBoard !== 'undefined' && AccountsBoard.onAccountRenamed) AccountsBoard.onAccountRenamed(oldName, newName); } catch(e) {}
+
+                // Fallback migrate order/selection if AccountsBoard module isn't loaded yet
+                try {
+                    const cfg = (this.state.settings && this.state.settings.accountsBoard) ? this.state.settings.accountsBoard : null;
+                    if (cfg) {
+                        if (Array.isArray(cfg.order)) cfg.order = cfg.order.map(k => (k === oldName ? newName : k));
+                        if (cfg.selected && typeof cfg.selected === 'object') { cfg.selected[newName] = cfg.selected[oldName]; delete cfg.selected[oldName]; }
+                        if (cfg.nearMax && typeof cfg.nearMax === 'object') { cfg.nearMax[newName] = cfg.nearMax[oldName]; delete cfg.nearMax[oldName]; }
+                        if (cfg.showQR && typeof cfg.showQR === 'object') { cfg.showQR[newName] = cfg.showQR[oldName]; delete cfg.showQR[oldName]; }
+                    }
+                } catch(e) {}
                 return true;
             },
 
@@ -1607,7 +1833,11 @@
             },
 
             deleteCurrentAccount() {
-                const keys = Object.keys(this.state.accounts || {});
+                const rawKeys = Object.keys(this.state.accounts || {});
+
+                const cfg = (this.state.settings && this.state.settings.accountsBoard) ? this.state.settings.accountsBoard : null;
+                let keys = (cfg && Array.isArray(cfg.order)) ? cfg.order.filter(k => rawKeys.includes(k)) : [];
+                rawKeys.forEach(k => { if (!keys.includes(k)) keys.push(k); });
                 if (keys.length === 0) {
                     Notify.show("No accounts to delete.", "warning");
                     this.openAccountModal('add');
@@ -1873,6 +2103,7 @@
             },
 
             updateUI() {
+                this.ensureCardDb();
                 const acct = (this.state.currentAccount && this.state.accounts[this.state.currentAccount]) ? this.state.accounts[this.state.currentAccount] : null;
                 const data = (acct && acct.data) ? acct.data : {};
 
@@ -1887,7 +2118,8 @@
                 if (badge) badge.style.display = (acct && acct.prestige) ? 'inline-block' : 'none';
                 if (typeof this.updateAlbumLockState === 'function') this.updateAlbumLockState();
                 document.body.classList.toggle('album-compare', activeViewId === 'view-album');
-                document.body.classList.toggle('compare-compact', ['view-album','view-stats','view-vault','view-showroom'].includes(activeViewId));
+                document.body.classList.toggle('compare-compact', ['view-album','view-stats','view-vault','view-showroom','view-calendar'].includes(activeViewId));
+                document.body.classList.toggle('quick-edit-dupes', !!(this.state.settings && this.state.settings.quickEditDupes));
                 this.updateAlbumControls();
                 this.syncCompareViews();
 
@@ -1913,6 +2145,8 @@
                     }
                     badge.style.display = count > 1 ? 'block' : 'none';
                     badge.textContent = '+' + (count - 1);
+                    const dupInp = card.querySelector('input.dupe-input');
+                    if (dupInp) dupInp.value = String(count > 0 ? Math.max(0, count - 1) : 0);
                 });
 
                 // Update Bars
@@ -1956,7 +2190,103 @@
                 if(typeof Showroom !== 'undefined' && Showroom.checkAchievements) Showroom.checkAchievements();
             },
 
-            updateProgressBars() {
+           
+            setQuickEditDupes(on) {
+                if (!this.state.settings || typeof this.state.settings !== 'object') this.state.settings = {};
+                this.state.settings.quickEditDupes = !!on;
+                this.saveData();
+                this.updateUI();
+                this.updateAlbumControls();
+            },
+
+            // Set "duplicates" directly (extras beyond the first copy).
+            // Rules:
+            // - dupes = 0 keeps sticker uncollected if it was 0, otherwise sets to 1 (collected w/ no dupes)
+            // - dupes > 0 sets total copies to dupes + 1
+            setCardDupesForAccount(acctKey, id, dupes) {
+                if (!this.state.accounts[acctKey]) return;
+
+                const acct = this.state.accounts[acctKey];
+                const meta = this.cardDb && this.cardDb[id] ? this.cardDb[id] : null;
+                if (meta && meta.set === 25 && !acct.prestige) {
+                    Notify.show(`${acct.name} is not in Prestige mode (Set 25 locked).`, 'warning');
+                    return;
+                }
+
+                let d = parseInt(dupes, 10);
+                if (!Number.isFinite(d) || d < 0) d = 0;
+
+                const data = acct.data || (acct.data = {});
+                const current = data[id] || 0;
+
+                let newTotal = 0;
+                if (d === 0) {
+                    newTotal = current > 0 ? 1 : 0;
+                } else {
+                    newTotal = d + 1;
+                }
+
+                data[id] = newTotal;
+
+                this.saveData();
+                if(typeof Trade !== 'undefined') Trade.renderPlans();
+                if(typeof Trade !== 'undefined') Trade.updateNotify();
+                this.updateUI();
+                if(typeof Showroom !== 'undefined' && Showroom.checkAchievements) Showroom.checkAchievements();
+            },
+
+ 
+            applyTransfer(fromKey, toKey, id, opts = {}) {
+                const from = this.state.accounts[fromKey];
+                const to = this.state.accounts[toKey];
+                if (!from || !to) return false;
+
+                const meta = (this.cardDb && this.cardDb[id]) ? this.cardDb[id] : null;
+
+                // Prestige safeguard: do not allow Set 25 to be received unless target is in prestige
+                if (meta && meta.set === 25 && !to.prestige) {
+                    Notify.show(`${to.name} is not in Prestige mode (Set 25 locked).`, 'warning');
+                    return false;
+                }
+
+                const fromData = from.data || {};
+                const toData = to.data || {};
+
+                const fromVal = fromData[id] || 0;
+                if (fromVal <= 0) {
+                    Notify.show(`${from.name} does not have that sticker to send.`, 'error');
+                    return false;
+                }
+
+                // By default, require duplicates (>=2). CalendarPlanner can pass allowSacrifice:true
+                const allowSacrifice = !!opts.allowSacrifice;
+                if (!allowSacrifice && fromVal <= 1) {
+                    Notify.show(`That would sacrifice ${from.name}'s only copy. Enable “Allow sending single copies” to do that.`, 'warning');
+                    return false;
+                }
+
+                // Apply inventory changes (batch: single save + single UI update)
+                fromData[id] = Math.max(0, fromVal - 1);
+                toData[id] = (toData[id] || 0) + 1;
+
+                // Count this as a daily send (same limit used by Trade Planner)
+                if (opts && opts.countTrade !== false) {
+                    try {
+                        if (typeof from.tradesUsed !== 'number') from.tradesUsed = 0;
+                        from.tradesUsed = Math.min(5, from.tradesUsed + 1);
+                        if (!from.lastTradeReset) from.lastTradeReset = Date.now();
+                    } catch(e) {}
+                }
+
+                this.saveData();
+                if(typeof Trade !== 'undefined') Trade.renderPlans();
+                if(typeof Trade !== 'undefined') Trade.updateNotify();
+                this.updateUI();
+                if(typeof Showroom !== 'undefined' && Showroom.checkAchievements) Showroom.checkAchievements();
+                return true;
+            },
+
+updateProgressBars() {
                 // Multi-account Album view (and any other rendered set cards with data attributes)
                 document.querySelectorAll('.album-set[data-set][data-account]').forEach(setEl => {
                     const acctKey = setEl.getAttribute('data-account');
@@ -2020,6 +2350,10 @@
 
                 let order = (cfg && Array.isArray(cfg.order)) ? cfg.order.filter(k => keys.includes(k)) : [];
                 keys.forEach(k => { if (!order.includes(k)) order.push(k); });
+
+                // Filter using Accounts -> visibility toggles (selected)
+                const selected = (cfg && cfg.selected && typeof cfg.selected === 'object') ? cfg.selected : {};
+                order = order.filter(k => selected[k] !== false);
 
                 const a = this._getAlbumCfg();
                 if (a.pinnedAccount && order.includes(a.pinnedAccount)) {
@@ -2187,6 +2521,10 @@
                 if (pill) {
                     pill.style.display = (a.mode === 'single') ? 'inline-flex' : 'none';
                     pill.textContent = `Set ${a.selectedSet}`;
+
+
+                const q = document.getElementById('album-quickedit-toggle');
+                if (q) q.checked = !!(this.state.settings && this.state.settings.quickEditDupes);
                 }
             },
 
@@ -2253,7 +2591,72 @@
             },
 
 
-            _ensureAlbumBound() {
+            
+            _ensureGlobalBound() {
+                if (this._globalBound) return;
+                this._globalBound = true;
+
+                document.addEventListener('click', (e) => {
+                    // Copy buttons anywhere (MoGo link/code, etc.)
+                    const copyBtn = e.target.closest && e.target.closest('button.btn-mini[data-action="copy"]');
+                    if (copyBtn) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const t = copyBtn.getAttribute('data-text') || '';
+                        if (t) Manager.copyText(t);
+                        return;
+                    }
+
+                    // Pin buttons on compare views (Stats/Vault/Showroom) and Album (fallback)
+                    const pinBtn = e.target.closest && e.target.closest('button.album-pin-btn[data-action="pin"]');
+                    if (pinBtn) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const acctKey = pinBtn.getAttribute('data-account');
+                        const viewKey = pinBtn.getAttribute('data-view');
+                        if (acctKey) {
+                            if (viewKey) Manager.toggleComparePin(viewKey, acctKey);
+                            else Manager.togglePinAccount(acctKey);
+                        }
+                        return;
+                    }
+
+                    
+                    // Global account order controls
+                    const moveBtn = e.target.closest && e.target.closest('button[data-action="acct-move"]');
+                    if (moveBtn) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const acctKey = moveBtn.getAttribute('data-acct');
+                        const dir = parseInt(moveBtn.getAttribute('data-dir') || '0', 10);
+                        if (acctKey && dir && typeof AccountsBoard !== 'undefined' && AccountsBoard.move) {
+                            AccountsBoard.move(acctKey, dir);
+                            // Refresh the rest of the UI that depends on account order/filter
+                            try { Manager.updateAccountSelector(); } catch(e) {}
+                            try { Manager.buildAlbumUI(); } catch(e) {}
+                            try { Manager.updateUI(); } catch(e) {}
+                            try { Manager.syncCompareViews(); } catch(e) {}
+                            try { if (typeof CalendarPlanner !== 'undefined' && CalendarPlanner.render) CalendarPlanner.render(); } catch(e) {}
+                        }
+                        return;
+                    }
+
+// Vault boxes in compare view (avoid inline onclick quoting issues)
+                    const vbox = e.target.closest && e.target.closest('.vault-box[data-action="vault-open"]');
+                    if (vbox) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const acctKey = vbox.getAttribute('data-account');
+                        const cost = parseInt(vbox.getAttribute('data-cost') || '0', 10);
+                        if (acctKey && cost && typeof Vault !== 'undefined' && Vault.clickVaultForAccount) {
+                            Vault.clickVaultForAccount(acctKey, cost);
+                        }
+                        return;
+                    }
+                }, true); // capture so we can intercept before weird inline handlers
+            },
+
+_ensureAlbumBound() {
                 if (this._albumBound) return;
                 this._albumBound = true;
 
@@ -2319,6 +2722,34 @@ if (pinBtn) {
                         Manager.updateCardForAccount(acctKey, id, 1);
                     }
                 });
+
+
+                // Duplicates quick input (apply on change / enter)
+                shell.addEventListener('keydown', (e) => {
+                    const inp = e.target && e.target.closest ? e.target.closest('input.dupe-input') : null;
+                    if (!inp) return;
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        inp.blur();
+                    }
+                });
+
+                shell.addEventListener('change', (e) => {
+                    const inp = e.target && e.target.closest ? e.target.closest('input.dupe-input') : null;
+                    if (!inp) return;
+
+                    const card = inp.closest('.card-container');
+                    if (!card) return;
+                    const acctKey = card.getAttribute('data-account');
+                    const id = card.getAttribute('data-id');
+                    if (!acctKey || !id) return;
+
+                    const setEl = card.closest('.album-set');
+                    if (setEl && setEl.classList.contains('locked')) return;
+
+                    Manager.setCardDupesForAccount(acctKey, id, inp.value);
+                });
+
             },
 
             _computeVaultStarsForAccount(acctKey) {
@@ -2482,6 +2913,7 @@ if (pinBtn) {
                                     </div>
                                     <div class="controls">
                                         <button class="ctrl-btn minus" data-action="minus" type="button">-</button>
+                                        <input class="dupe-input" data-action="dupes" type="number" min="0" step="1" inputmode="numeric" pattern="[0-9]*" title="Duplicates (extras beyond 1)" />
                                         <button class="ctrl-btn plus" data-action="plus" type="button">+</button>
                                     </div>
                                 </div>
@@ -2549,7 +2981,12 @@ if (pinBtn) {
 
                 sel.innerHTML = '';
 
-                const keys = Object.keys(this.state.accounts || {});
+                const rawKeys = Object.keys(this.state.accounts || {});
+
+                const cfg = (this.state.settings && this.state.settings.accountsBoard) ? this.state.settings.accountsBoard : null;
+                let keys = (cfg && Array.isArray(cfg.order)) ? cfg.order.filter(k => rawKeys.includes(k)) : [];
+                rawKeys.forEach(k => { if (!keys.includes(k)) keys.push(k); });
+
                 if (keys.length === 0) {
                     const empty = document.createElement('option');
                     empty.value = '';
@@ -2594,6 +3031,7 @@ if (pinBtn) {
                 }
 
                 if(viewId === 'view-smart' && typeof Smart !== 'undefined') { Smart.ensureInit(); Smart.generate(); Smart.renderMultiDayPlan(); }
+                if(viewId === 'view-calendar' && typeof CalendarPlanner !== 'undefined') { CalendarPlanner.ensureInit(); CalendarPlanner.render(); }
                 if(viewId === 'view-blitz' && typeof Blitz !== 'undefined') { Blitz.ensureInit(); }
                 if(viewId === 'view-bulk' && typeof Bulk !== 'undefined') { Bulk.init(); Bulk.buildSetOptions && Bulk.buildSetOptions(); Bulk.populateStickerOptions && Bulk.populateStickerOptions(false); Bulk.ensureActiveRefresh && Bulk.ensureActiveRefresh(); }
                 if(viewId === 'view-showroom') { const b = document.getElementById('showroom-notify'); if (b) b.style.display = 'none'; if (typeof Showroom !== 'undefined') { Showroom.render(); Showroom.checkAchievements(true); } }
@@ -2977,17 +3415,17 @@ if (pinBtn) {
                                 <p style="color:#666; font-weight:bold;">Exchange duplicate Sticker Stars for rewards!</p>
 
                                 <div class="vaults-grid">
-                                    <div class="vault-box v-orange" onclick="Vault.clickVaultForAccount(${JSON.stringify(acctKey)}, 250)">
+                                    <div class="vault-box v-orange" data-action="vault-open" data-account="${esc(acctKey)}" data-cost="250">
                                         <div class="notification-bubble nb-red" style="display:${n250? 'flex':'none'};">1</div>
                                         <div class="vault-emoji">🟠⭐</div>
                                         <div class="vault-cost">★ 250</div>
                                     </div>
-                                    <div class="vault-box v-blue" onclick="Vault.clickVaultForAccount(${JSON.stringify(acctKey)}, 450)">
+                                    <div class="vault-box v-blue" data-action="vault-open" data-account="${esc(acctKey)}" data-cost="450">
                                         <div class="notification-bubble nb-red" style="display:${n450? 'flex':'none'};">2</div>
                                         <div class="vault-emoji">🔵⭐</div>
                                         <div class="vault-cost">★ 450</div>
                                     </div>
-                                    <div class="vault-box v-gold" onclick="Vault.clickVaultForAccount(${JSON.stringify(acctKey)}, 700)">
+                                    <div class="vault-box v-gold" data-action="vault-open" data-account="${esc(acctKey)}" data-cost="700">
                                         <div class="notification-bubble nb-red" style="display:${n700? 'flex':'none'};">3</div>
                                         <div class="notification-bubble nb-gold" style="display:${n1150? 'flex':'none'};">!</div>
                                         <div class="vault-emoji">🟡⭐</div>
@@ -3201,15 +3639,34 @@ if (pinBtn) {
             },
 
             // --- Draft setters (do not re-render the board until Apply) ---
-            draftSetSelected(key, checked) {
+                        draftSetSelected(key, checked) {
                 const keys = Object.keys(Manager.state.accounts || {});
                 const draft = this._getDraft(keys);
                 draft.selected[key] = !!checked;
                 draft.userCustomized = true;
-                this._markDraftDirty();
+
+                // Apply globally immediately (controls Album/compare visibility + order shell)
+                const cfg = this._ensureCfg(keys);
+                cfg.selected[key] = !!checked;
+                cfg.userCustomized = true;
+
+                // Keep draft in sync but no "pending" mode needed for global visibility changes
+                this._draftDirty = false;
+                this._syncPendingUi();
+
+                Manager.saveData();
+
+                // Refresh visible UIs
+                try { Manager.buildAlbumUI(); } catch(e) {}
+                try { Manager.updateAccountSelector(); } catch(e) {}
+                try { Manager.updateUI(); } catch(e) {}
+                try { Manager.syncCompareViews(); } catch(e) {}
+                try { if (typeof Showroom !== 'undefined' && Showroom.render) Showroom.render(); } catch(e) {}
+                try { if (typeof CalendarPlanner !== 'undefined' && CalendarPlanner.render) CalendarPlanner.render(); } catch(e) {}
             },
 
-            draftSetNearMax(key, value) {
+
+                        draftSetNearMax(key, value) {
                 const keys = Object.keys(Manager.state.accounts || {});
                 const draft = this._getDraft(keys);
                 let n = parseInt(value);
@@ -3217,16 +3674,40 @@ if (pinBtn) {
                 n = Math.max(1, Math.min(10, n));
                 draft.nearMax[key] = n;
                 draft.userCustomized = true;
-                this._markDraftDirty();
+
+                // Apply immediately (affects Account Board near-completion sections)
+                const cfg = this._ensureCfg(keys);
+                cfg.nearMax[key] = n;
+                cfg.userCustomized = true;
+
+                this._draftDirty = false;
+                this._syncPendingUi();
+                Manager.saveData();
+
+                try { this.renderBoard(); } catch(e) {}
+                try { this.renderPopup(); } catch(e) {}
             },
 
-            draftSetShowQR(key, checked) {
+
+                        draftSetShowQR(key, checked) {
                 const keys = Object.keys(Manager.state.accounts || {});
                 const draft = this._getDraft(keys);
                 draft.showQR[key] = !!checked;
                 draft.userCustomized = true;
-                this._markDraftDirty();
+
+                // Apply immediately (affects Account Board QR display)
+                const cfg = this._ensureCfg(keys);
+                cfg.showQR[key] = !!checked;
+                cfg.userCustomized = true;
+
+                this._draftDirty = false;
+                this._syncPendingUi();
+                Manager.saveData();
+
+                try { this.renderBoard(); } catch(e) {}
+                try { this.renderPopup(); } catch(e) {}
             },
+
 
             selectAllDraft() {
                 const keys = Object.keys(Manager.state.accounts || {});
@@ -3892,19 +4373,50 @@ if (pinBtn) {
 
                     return `
                         <label class="acct-pick" data-acct=${JSON.stringify(k)} title="Choose accounts to show side-by-side, set near-completion threshold, and toggle QR per account">
-                            <input type="checkbox" ${checked} onchange="AccountsBoard.draftSetSelected(${JSON.stringify(k)}, this.checked)">
+                            <span class="acct-move-wrap" style="display:flex; gap:4px; align-items:center; margin-right:6px;">
+                                <button class="btn-mini" type="button" data-action="acct-move" data-dir="-1" data-acct=${JSON.stringify(k)} title="Move left">◀</button>
+                                <button class="btn-mini" type="button" data-action="acct-move" data-dir="1" data-acct=${JSON.stringify(k)} title="Move right">▶</button>
+                            </span>
+                            <input type="checkbox" ${checked} data-action="ab-selected" data-acct=${JSON.stringify(k)}>
                             <span class="acct-pick-name">${label}</span>
                             <span style="font-size:11px; font-weight:900; color:#777;">near ≤</span>
-                            <input type="number" min="1" max="10" value="${maxM}" oninput="AccountsBoard.draftSetNearMax(${JSON.stringify(k)}, this.value)">
+                            <input type="number" min="1" max="10" value="${maxM}" data-action="ab-near" data-acct=${JSON.stringify(k)}>
                             <span style="font-size:11px; font-weight:900; color:#777;">missing</span>
                             <span style="width:1px; height:18px; background:#e9e9e9; display:inline-block; margin:0 4px;"></span>
                             <span style="display:flex; align-items:center; gap:6px;">
-                                <input type="checkbox" ${qrChecked} onchange="AccountsBoard.draftSetShowQR(${JSON.stringify(k)}, this.checked)">
+                                <input type="checkbox" ${qrChecked} data-action="ab-qr" data-acct=${JSON.stringify(k)}>
                                 <span style="font-size:11px; font-weight:900; color:#777;">QR</span>
                             </span>
                         </label>
                     `;
                 }).join('');
+
+                // Bind controls once (no inline JS handlers needed)
+                if (!this._controlsBound) {
+                    this._controlsBound = true;
+
+                    controls.addEventListener('change', (ev) => {
+                        const t = ev.target;
+                        if (!t || !t.getAttribute) return;
+                        const act = t.getAttribute('data-action');
+                        const acctKey = t.getAttribute('data-acct');
+                        if (!act || !acctKey) return;
+
+                        if (act === 'ab-selected') this.draftSetSelected(acctKey, !!t.checked);
+                        if (act === 'ab-qr') this.draftSetShowQR(acctKey, !!t.checked);
+                    });
+
+                    controls.addEventListener('input', (ev) => {
+                        const t = ev.target;
+                        if (!t || !t.getAttribute) return;
+                        const act = t.getAttribute('data-action');
+                        const acctKey = t.getAttribute('data-acct');
+                        if (!act || !acctKey) return;
+
+                        if (act === 'ab-near') this.draftSetNearMax(acctKey, t.value);
+                    });
+                }
+
 
                 this._syncPendingUi();
             },
@@ -6763,6 +7275,7 @@ this.updateUI();
             },
 
             updateUI() {
+                Manager.ensureCardDb();
                 const acctKey = Manager.state.currentAccount;
                 const day = this._ensureDay(acctKey);
                 if (!day) return;
@@ -8231,8 +8744,872 @@ renderCompare() {
                 .replace(/>/g, '&gt;');
         }
 
+
+        // --- Calendar Send Planner (uses live Wizard Suite data; no imports required) ---
+        const CalendarPlanner = {
+            STORAGE_KEY: 'wizardSuite_calendarPlanner_v1',
+            _inited: false,
+            state: {
+                cfg: null,
+                plan: null,   // { days: [{date, sends: [...] }], targets:[...], senders:[...], totals:{...} }
+                done: {}      // key => true
+            },
+
+            ensureInit() {
+                if (this._inited) return;
+                this._inited = true;
+                this.load();
+            },
+
+            load() {
+                try {
+                    const raw = localStorage.getItem(this.STORAGE_KEY);
+                    if (raw) this.state = Object.assign(this.state, JSON.parse(raw));
+                } catch(e) { console.warn(e); }
+            },
+
+            save() {
+                try { localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.state)); } catch(e) {}
+                this.updateNotify();
+            },
+
+            updateNotify() {
+                const bubble = document.getElementById('calplan-notify');
+                if (!bubble) return;
+                const remaining = this.countRemaining();
+                bubble.style.display = remaining > 0 ? 'inline-block' : 'none';
+                bubble.textContent = String(remaining);
+            },
+
+            _todayNY() {
+                // simple local date (works fine for this tool)
+                const d = new Date();
+                const z = (n)=> String(n).padStart(2,'0');
+                return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;
+            },
+
+            _addDays(yyyy_mm_dd, n) {
+                const [Y,M,D] = yyyy_mm_dd.split('-').map(x=>parseInt(x,10));
+                const dt = new Date(Y, (M-1), D);
+                dt.setDate(dt.getDate() + n);
+                const z = (x)=> String(x).padStart(2,'0');
+                return `${dt.getFullYear()}-${z(dt.getMonth()+1)}-${z(dt.getDate())}`;
+            },
+
+            _weekday(yyyy_mm_dd) {
+                const [Y,M,D] = yyyy_mm_dd.split('-').map(x=>parseInt(x,10));
+                return new Date(Y, (M-1), D).getDay(); // 0 Sun
+            },
+
+            _labelAccount(key) {
+                const a = (Manager.state.accounts || {})[key];
+                if (!a) return key;
+                return `${a.name}${a.device ? ' - ' + a.device : ''}`;
+            },
+
+            _uniqueCountFor(acctKey) {
+                const acct = (Manager.state.accounts || {})[acctKey];
+                if (!acct) return 0;
+                const data = acct.data || {};
+                let unique = 0;
+                for (let id in Manager.cardDb) {
+                    const meta = Manager.cardDb[id];
+                    if (meta && meta.set === 25 && !acct.prestige) continue;
+                    if ((data[id] || 0) > 0) unique += 1;
+                }
+                return unique;
+            },
+
+            _setMissingCountsFor(acctKey, dataOverride=null) {
+                const acct = (Manager.state.accounts || {})[acctKey];
+                const data = dataOverride || (acct ? (acct.data || {}) : {});
+                const miss = {};
+                for (let s=1; s<=SET_DATA.length; s++) {
+                    const set = SET_DATA[s-1];
+                    let collected = 0;
+                    for (let i=0;i<set.cards.length;i++){
+                        const id = `s${s}_${i}`;
+                        const meta = Manager.cardDb[id];
+                        if (meta && meta.set === 25 && acct && !acct.prestige) continue;
+                        if ((data[id] || 0) > 0) collected++;
+                    }
+                    miss[s] = Math.max(0, 9 - collected);
+                }
+                return miss;
+            },
+
+            _feasibleMaxUnique(targetKey, senderKeys, allowGold, allowSacrifice, donorMinUnique) {
+                const accounts = Manager.state.accounts || {};
+                const target = accounts[targetKey];
+                if (!target) return 0;
+
+                const targetData = target.data || {};
+                const currentUnique = this._uniqueCountFor(targetKey);
+
+                let possible = 0;
+                for (let id in Manager.cardDb) {
+                    const meta = Manager.cardDb[id];
+                    if (!meta) continue;
+
+                    // prestige lock
+                    if (meta.set === 25 && !target.prestige) continue;
+
+                    if ((targetData[id] || 0) > 0) continue; // already have
+                    if (!allowGold && meta.gold) continue;
+
+                    let supplied = false;
+                    for (let donorKey of senderKeys) {
+                        if (donorKey === targetKey) continue;
+                        const donor = accounts[donorKey];
+                        if (!donor) continue;
+                        if (meta.set === 25 && !donor.prestige) continue;
+
+                        const dVal = (donor.data || {})[id] || 0;
+                        if (dVal <= 0) continue;
+
+                        if (!allowSacrifice) {
+                            if (dVal > 1) { supplied = true; break; }
+                        } else {
+                            // sacrifice allowed only if donor stays above donorMinUnique after giving away a unique
+                            if (dVal > 1) { supplied = true; break; }
+                            const donorUnique = this._uniqueCountFor(donorKey);
+                            if (donorUnique > (donorMinUnique || 0)) { supplied = true; break; }
+                        }
+                    }
+                    if (supplied) possible++;
+                }
+
+                return Math.min(currentUnique + possible, (target.prestige ? 225 : 216));
+            },
+
+            toggleAllSenders(on) {
+                const box = document.getElementById('cp-senders-all');
+                if (box) box.checked = !!on;
+                this.renderLists();
+            },
+
+            _readCfgFromUI() {
+                const strat = document.getElementById('cp-strategy')?.value || 'sets';
+                const mode = document.getElementById('cp-mode')?.value || 'sequential';
+                const start = document.getElementById('cp-start')?.value || this._todayNY();
+                const maxDays = Math.max(1, Math.min(90, parseInt(document.getElementById('cp-maxdays')?.value || '30',10) || 30));
+                const allowGold = !!document.getElementById('cp-allow-gold')?.checked;
+                const allowSacrifice = !!document.getElementById('cp-allow-sacrifice')?.checked;
+                const donorMin = parseInt(document.getElementById('cp-donor-min')?.value || '180',10) || 0;
+                const sounds = !!document.getElementById('cp-sounds')?.checked;
+
+                const targets = [];
+                document.querySelectorAll('#cp-targets input[type="checkbox"][data-acct]').forEach(cb=>{
+                    if (cb.checked) targets.push(cb.getAttribute('data-acct'));
+                });
+
+                const sendersAll = !!document.getElementById('cp-senders-all')?.checked;
+                const includeTargets = !!document.getElementById('cp-include-targets')?.checked;
+
+                let senders = [];
+                if (sendersAll) {
+                    const accounts = Manager.state.accounts || {};
+                    const rawKeys = Object.keys(accounts);
+                    const ab = (Manager.state.settings && Manager.state.settings.accountsBoard) ? Manager.state.settings.accountsBoard : null;
+                    let ordered = (ab && Array.isArray(ab.order)) ? ab.order.filter(k => rawKeys.includes(k)) : [];
+                    rawKeys.forEach(k => { if (!ordered.includes(k)) ordered.push(k); });
+                    senders = ordered;
+                } else {
+                    document.querySelectorAll('#cp-senders input[type="checkbox"][data-acct]').forEach(cb=>{
+                        if (cb.checked) senders.push(cb.getAttribute('data-acct'));
+                    });
+                }
+
+                if (!includeTargets) {
+                    senders = senders.filter(k => !targets.includes(k));
+                }
+
+                // Per-target goals
+                const goals = {};
+                document.querySelectorAll('#cp-targets input[type="number"][data-goal]').forEach(inp=>{
+                    const acct = inp.getAttribute('data-goal');
+                    const v = parseInt(inp.value || '0',10) || 0;
+                    if (acct) goals[acct] = v;
+                });
+
+                return { strat, mode, start, maxDays, allowGold, allowSacrifice, donorMin, sounds, targets, senders, goals, includeTargets, sendersAll };
+            },
+
+            render() {
+                this.ensureInit();
+
+                // Set default start date if empty
+                const startEl = document.getElementById('cp-start');
+                if (startEl && !startEl.value) startEl.value = this._todayNY();
+
+                this.renderLists();
+                this.updateNotify();
+
+                // Render existing plan if present
+                if (this.state.plan) {
+                    this.renderSummary();
+                    this.renderCalendar();
+                }
+            },
+
+            renderLists() {
+                const accounts = Manager.state.accounts || {};
+                const rawKeys = Object.keys(accounts);
+
+                const ab = (Manager.state.settings && Manager.state.settings.accountsBoard) ? Manager.state.settings.accountsBoard : null;
+                let keys = (ab && Array.isArray(ab.order)) ? ab.order.filter(k => rawKeys.includes(k)) : [];
+                rawKeys.forEach(k => { if (!keys.includes(k)) keys.push(k); });
+
+                const selectedMap = (ab && ab.selected && typeof ab.selected === 'object') ? ab.selected : {};
+
+                const tWrap = document.getElementById('cp-targets');
+                const sWrap = document.getElementById('cp-senders');
+                if (!tWrap || !sWrap) return;
+
+                const cfg = this._readCfgFromUI();
+                const includeTargets = cfg.includeTargets;
+                const sendersAll = cfg.sendersAll;
+
+                // First render convenience: if nothing is checked yet, default to the global Accounts filter
+                const defaultTargets = (cfg.targets && cfg.targets.length) ? cfg.targets.slice() : keys.filter(k => selectedMap[k] !== false);
+                const defaultSenders = (cfg.senders && cfg.senders.length) ? cfg.senders.slice() : keys.filter(k => selectedMap[k] !== false);
+
+                // Targets list (each with goal input + max feasible hint)
+                tWrap.innerHTML = keys.length ? keys.map(k=>{
+                    const u = this._uniqueCountFor(k);
+                    // compute feasible max based on "all accounts" (or current selected senders if not all)
+                    const sendersForMax = sendersAll ? keys : (defaultSenders.length ? defaultSenders : keys);
+                    const maxFeasible = this._feasibleMaxUnique(k, sendersForMax, cfg.allowGold, cfg.allowSacrifice, cfg.donorMin);
+                    const storedGoal = (cfg.goals && cfg.goals[k]) ? cfg.goals[k] : maxFeasible;
+
+                    return `
+                        <div class="cp-row">
+                            <div class="left">
+                                <div class="name">${Manager.esc(accounts[k].name || k)}${accounts[k].device ? ` <span style="opacity:.7; font-size:11px;">(${Manager.esc(accounts[k].device)})</span>`:''}</div>
+                                <div class="meta">Unique: ${u} • Max feasible: ${maxFeasible}</div>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <label class="cp-check" title="Include as target"><input type="checkbox" data-acct="${Manager.esc(k)}" ${defaultTargets.includes(k) ? 'checked':''}></label>
+                                <input type="number" min="0" max="${accounts[k].prestige ? 225 : 216}" value="${storedGoal}" data-goal="${Manager.esc(k)}" style="width:88px; padding:6px 8px; border-radius:12px; border:1px solid #ddd; font-weight:900;">
+                            </div>
+                        </div>
+                    `;
+                }).join('') : `<div style="color:#999; font-weight:900;">No accounts yet. Add accounts first.</div>`;
+
+                // Senders list only shown when "all accounts" unchecked
+                if (sendersAll) {
+                    sWrap.innerHTML = `<div style="color:#777; font-weight:900;">Using all accounts as senders.</div>`;
+                    return;
+                }
+
+                sWrap.innerHTML = keys.length ? keys.map(k=>{
+                    const disabled = (!includeTargets && defaultTargets.includes(k));
+                    return `
+                        <div class="cp-row" style="${disabled ? 'opacity:.55' : ''}">
+                            <div class="left">
+                                <div class="name">${Manager.esc(accounts[k].name || k)}</div>
+                                <div class="meta">Unique: ${this._uniqueCountFor(k)}</div>
+                            </div>
+                            <label class="cp-check">
+                                <input type="checkbox" data-acct="${Manager.esc(k)}" ${disabled ? 'disabled':''} ${defaultSenders.includes(k) ? 'checked':''}>
+                                Send
+                            </label>
+                        </div>
+                    `;
+                }).join('') : `<div style="color:#999; font-weight:900;">No accounts.</div>`;
+            },
+
+            clear() {
+                this.state.plan = null;
+                this.state.done = {};
+                this.save();
+                this._hide('cp-summary'); this._hide('cp-calendar'); this._hide('cp-daypanel');
+                Notify.show('Send Calendar cleared.', 'info');
+            },
+
+            refresh() {
+                // regenerate using existing config/selection (keeps done keys if still present)
+                if (!this.state.plan) {
+                    this.generate();
+                    return;
+                }
+                this.generate(true);
+            },
+
+            _hide(id){ const el=document.getElementById(id); if(el) el.style.display='none'; },
+            _show(id){ const el=document.getElementById(id); if(el) el.style.display='block'; },
+
+            countRemaining() {
+                const p = this.state.plan;
+                if (!p || !p.days) return 0;
+                let total = 0;
+                p.days.forEach(d => {
+                    (d.sends||[]).forEach(s => {
+                        const key = this._sendKey(d.date, s);
+                        if (!this.state.done[key]) total++;
+                    });
+                });
+                return total;
+            },
+
+            _sendKey(date, s) { return `${date}|${s.from}|${s.to}|${s.id}`; },
+
+            generate(isRefresh=false) {
+                this.ensureInit();
+                const cfg = this._readCfgFromUI();
+                if (!cfg.targets.length) { Notify.show('Pick at least one target account.', 'warning'); return; }
+                if (!cfg.senders.length) { Notify.show('Pick sender accounts.', 'warning'); return; }
+
+                const accounts = Manager.state.accounts || {};
+                const targets = cfg.targets.filter(k=>accounts[k]);
+                const senders = cfg.senders.filter(k=>accounts[k]);
+
+                const goals = {};
+                targets.forEach(t=>{
+                    goals[t] = Math.max(0, Math.min(accounts[t].prestige ? 225 : 216, (cfg.goals[t] || 0)));
+                });
+
+                // Build mutable working copies per target for planning (so we can simulate progress)
+                const work = {};
+                const missSets = {};
+                const need = {};
+                targets.forEach(t=>{
+                    work[t] = JSON.parse(JSON.stringify(accounts[t].data || {}));
+                    missSets[t] = this._setMissingCountsFor(t, work[t]);
+                    need[t] = new Set();
+                    for (let id in Manager.cardDb) {
+                        const meta = Manager.cardDb[id];
+                        if (!meta) continue;
+                        if (meta.set === 25 && !accounts[t].prestige) continue;
+                        if (!cfg.allowGold && meta.gold) continue;
+                        if ((work[t][id] || 0) > 0) continue;
+                        need[t].add(id);
+                    }
+                });
+
+                const start = cfg.start || this._todayNY();
+                const maxDays = cfg.maxDays;
+
+                // Helper: can donor send id?
+                const canSend = (donorKey, targetKey, id) => {
+                    if (donorKey === targetKey) return false;
+                    const donor = accounts[donorKey];
+                    const target = accounts[targetKey];
+                    if (!donor || !target) return false;
+                    const meta = Manager.cardDb[id];
+                    if (!meta) return false;
+                    if (meta.set === 25 && !target.prestige) return false;
+                    if (meta.set === 25 && !donor.prestige) return false;
+                    if (!cfg.allowGold && meta.gold) return false;
+
+                    const dv = (donor.data || {})[id] || 0;
+                    if (dv <= 0) return false;
+
+                    if (!cfg.allowSacrifice) return dv > 1;
+
+                    if (dv > 1) return true;
+
+                    // sacrifice if donor stays above threshold
+                    const du = this._uniqueCountFor(donorKey);
+                    return du > (cfg.donorMin || 0);
+                };
+
+                const scoreSticker = (targetKey, id) => {
+                    const meta = Manager.cardDb[id];
+                    if (!meta) return 0;
+                    const sNum = meta.set;
+                    const missing = missSets[targetKey][sNum] ?? 9;
+                    const willComplete = (missing === 1);
+
+                    if (cfg.strat === 'random') return Math.random() * 1000;
+
+                    // reward weight: prefer completion + near completion
+                    const base = (willComplete ? 100000 : 0) + ((9 - missing) * 2000) + ((meta.stars || 1) * 120);
+                    if (cfg.strat === 'balanced') return base + (Math.random() * 50);
+                    // sets-first: heavily bias completion
+                    return base + (willComplete ? 50000 : 0) + (Math.random() * 50);
+                };
+
+                const targetOrder = targets.slice().sort((a,b)=>{
+                    const ua = this._uniqueCountFor(a);
+                    const ub = this._uniqueCountFor(b);
+                    const na = Math.max(0, goals[a] - ua);
+                    const nb = Math.max(0, goals[b] - ub);
+                    return na - nb;
+                });
+
+                const reachedGoal = (t) => this._uniqueCountSim(t, work[t], accounts[t].prestige) >= goals[t];
+
+                const planDays = [];
+                const todayKey = this._todayNY();
+
+                for (let d=0; d<maxDays; d++) {
+                    const date = this._addDays(start, d);
+                    const sends = [];
+
+                    // Daily remaining per sender (today respects Trade module counters if available)
+                    const caps = {};
+                    senders.forEach(s=>{
+                        const maxReg = 5;
+                        let remain = maxReg;
+                        try {
+                            if (date === todayKey && typeof Trade !== 'undefined' && Trade.getRemainingRegular) {
+                                remain = Trade.getRemainingRegular(s);
+                            }
+                        } catch(e){}
+                        caps[s] = remain;
+                    });
+
+                    // Stop early if all targets met
+                    if (targets.every(t=>reachedGoal(t))) break;
+
+                    // Selection loop
+                    const rr = { idx: 0 }; // for parallel round-robin
+
+                    for (let senderKey of senders) {
+                        let slots = caps[senderKey] || 0;
+                        while (slots > 0) {
+                            // pick target
+                            let targetKey = null;
+
+                            if (cfg.mode === 'sequential') {
+                                for (let t of targetOrder) {
+                                    if (reachedGoal(t)) continue;
+                                    targetKey = t; break;
+                                }
+                                if (!targetKey) break;
+                            } else {
+                                // parallel: round-robin among remaining
+                                const remainingTargets = targets.filter(t=>!reachedGoal(t));
+                                if (!remainingTargets.length) break;
+                                targetKey = remainingTargets[rr.idx % remainingTargets.length];
+                                rr.idx++;
+                            }
+
+                            // candidate stickers: missing for target and sendable by sender
+                            let bestId = null;
+                            let bestScore = -1;
+
+                            for (let id of need[targetKey]) {
+                                if (!canSend(senderKey, targetKey, id)) continue;
+                                const sc = scoreSticker(targetKey, id);
+                                if (sc > bestScore) { bestScore = sc; bestId = id; }
+                            }
+
+                            if (!bestId) {
+                                // sequential: try next target if current can't receive from this sender
+                                if (cfg.mode === 'sequential') {
+                                    let found = false;
+                                    for (let t of targetOrder) {
+                                        if (reachedGoal(t)) continue;
+                                        if (t === targetKey) continue;
+                                        for (let id of need[t]) {
+                                            if (!canSend(senderKey, t, id)) continue;
+                                            const sc = scoreSticker(t, id);
+                                            if (sc > bestScore) { bestScore = sc; bestId = id; targetKey = t; found = true; }
+                                        }
+                                        if (found) break;
+                                    }
+                                }
+                            }
+
+                            if (!bestId) break; // sender can't help any remaining targets
+
+                            // record send + mutate simulated target inventory
+                            const meta = Manager.cardDb[bestId];
+                            const setNum = meta.set;
+                            const beforeMissing = missSets[targetKey][setNum] ?? 9;
+                            const willCompleteSet = (beforeMissing === 1);
+
+                            // apply to working data
+                            work[targetKey][bestId] = (work[targetKey][bestId] || 0) + 1;
+                            need[targetKey].delete(bestId);
+
+                            // update set missing counts
+                            missSets[targetKey][setNum] = Math.max(0, beforeMissing - 1);
+
+                            sends.push({
+                                from: senderKey,
+                                to: targetKey,
+                                id: bestId,
+                                sticker: meta.name,
+                                stars: meta.stars,
+                                set: setNum,
+                                setName: (SET_DATA[setNum-1] ? SET_DATA[setNum-1].name : `Set ${setNum}`),
+                                setColor: (SET_DATA[setNum-1] ? SET_DATA[setNum-1].color : '#999'),
+                                reward: (SET_DATA[setNum-1] ? SET_DATA[setNum-1].reward : ''),
+                                completesSet: willCompleteSet
+                            });
+
+                            slots--;
+                        }
+                    }
+
+                    if (sends.length) planDays.push({ date, sends });
+                }
+
+                // Preserve done flags if refreshing (if the exact send still exists)
+                const nextDone = {};
+                if (isRefresh && this.state.done) {
+                    planDays.forEach(day=>{
+                        (day.sends||[]).forEach(s=>{
+                            const k = this._sendKey(day.date, s);
+                            if (this.state.done[k]) nextDone[k] = true;
+                        });
+                    });
+                }
+
+                this.state.cfg = cfg;
+                this.state.plan = {
+                    createdAt: Date.now(),
+                    start,
+                    maxDays,
+                    targets,
+                    senders,
+                    goals,
+                    days: planDays
+                };
+                this.state.done = nextDone;
+
+                this.save();
+                this.renderSummary();
+                this.renderCalendar();
+                Notify.show(`Planned ${planDays.reduce((a,d)=>a+(d.sends||[]).length,0)} sends across ${planDays.length} day(s).`, 'success');
+            },
+
+            _uniqueCountSim(acctKey, simData, prestige) {
+                let unique = 0;
+                for (let id in Manager.cardDb) {
+                    const meta = Manager.cardDb[id];
+                    if (!meta) continue;
+                    if (meta.set === 25 && !prestige) continue;
+                    if ((simData[id] || 0) > 0) unique++;
+                }
+                return unique;
+            },
+
+            renderSummary() {
+                const el = document.getElementById('cp-summary');
+                if (!el) return;
+                const p = this.state.plan;
+                if (!p) { el.style.display='none'; return; }
+
+                const totalSends = p.days.reduce((a,d)=>a+(d.sends||[]).length,0);
+                const remaining = this.countRemaining();
+                const lastDate = p.days.length ? p.days[p.days.length-1].date : p.start;
+
+                // Per-target progress preview
+                const lines = p.targets.map(t=>{
+                    const u = this._uniqueCountFor(t);
+                    const g = p.goals[t] || 0;
+                    const need = Math.max(0, g - u);
+                    return `<div style="font-size:12px; font-weight:900; color:#555;">${Manager.esc(this._labelAccount(t))}: <span style="color:#111;">${u}</span> → goal <span style="color:#ff4081;">${g}</span> <span style="opacity:.7;">(needs ${need})</span></div>`;
+                }).join('');
+
+                el.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; align-items:center;">
+                        <div>✨ Planned sends: <span style="color:#ff4081;">${totalSends}</span> • Remaining: <span style="color:#2e7d32;">${remaining}</span></div>
+                        <div style="font-size:12px; opacity:.85;">Through: <b>${lastDate}</b></div>
+                    </div>
+                    <div style="margin-top:10px; display:flex; flex-direction:column; gap:6px;">${lines}</div>
+                `;
+                el.style.display='block';
+            },
+
+            renderCalendar() {
+                const wrap = document.getElementById('cp-calendar');
+                if (!wrap) return;
+                const p = this.state.plan;
+                if (!p) { wrap.style.display='none'; return; }
+
+                // Build a simple grid covering from start to last planned day, aligned to weekday
+                const days = p.days || [];
+                const start = p.start;
+                const end = days.length ? days[days.length-1].date : start;
+
+                const dateList = [];
+                let cursor = start;
+                while (cursor <= end) {
+                    dateList.push(cursor);
+                    cursor = this._addDays(cursor, 1);
+                }
+
+                const padStart = this._weekday(start); // blanks before start
+                const dow = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div>${d}</div>`).join('');
+
+                // Map date->day object
+                const dayMap = {};
+                days.forEach(d=>{ dayMap[d.date] = d; });
+
+                const tiles = [];
+                for (let i=0;i<padStart;i++){
+                    tiles.push(`<div></div>`);
+                }
+
+                dateList.forEach(date=>{
+                    const day = dayMap[date];
+                    const sends = (day && day.sends) ? day.sends : [];
+                    const done = sends.filter(s => this.state.done[this._sendKey(date,s)]).length;
+                    const total = sends.length;
+
+                    // set completion alerts
+                    const completions = {};
+                    sends.forEach(s=>{
+                        if (s.completesSet) {
+                            const k = `${s.to}|${s.set}`;
+                            completions[k] = s;
+                        }
+                    });
+
+                    const badges = [];
+                    if (total) badges.push(`<div class="cp-badge complete">🎁 ${total} send${total===1?'':'s'}</div>`);
+                    Object.values(completions).slice(0,2).forEach(s=>{
+                        badges.push(`<div class="cp-badge set">🏁 ${Manager.esc((Manager.state.accounts[s.to]?.name)||s.to)} • Set ${s.set}</div>`);
+                    });
+                    if (done === total && total>0) badges.push(`<div class="cp-badge done">✅ Done</div>`);
+
+                    tiles.push(`
+                        <div class="cp-daytile" onclick="CalendarPlanner.openDay('${date}')">
+                            <div class="cp-progress">${total?`${done}/${total}`:'—'}</div>
+                            <div class="cp-daynum">${date}</div>
+                            <div class="cp-badges">${badges.join('') || `<div style="color:#aaa; font-weight:900; font-size:11px; margin-top:10px;">No sends</div>`}</div>
+                        </div>
+                    `);
+                });
+
+                wrap.innerHTML = `
+                    <div class="cp-dow">${dow}</div>
+                    <div class="cp-grid">${tiles.join('')}</div>
+                `;
+                wrap.style.display='block';
+            },
+
+            openDay(date) {
+                const p = this.state.plan;
+                if (!p) return;
+                const day = (p.days || []).find(d=>d.date === date);
+                const panel = document.getElementById('cp-daypanel');
+                if (!panel) return;
+
+                const sends = (day && day.sends) ? day.sends : [];
+                const total = sends.length;
+                const doneCount = sends.filter(s=>this.state.done[this._sendKey(date,s)]).length;
+
+                const setAlerts = sends.filter(s=>s.completesSet);
+                const alertHtml = setAlerts.length ? `
+                    <div style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">
+                        ${setAlerts.map(s=>`
+                            <div style="background:#fff3e0; border:1px solid #ffe0b2; padding:8px 10px; border-radius:14px; font-weight:900; font-size:12px;">
+                                🏁 <span style="color:#ff6f00;">${Manager.esc(Manager.state.accounts[s.to]?.name || s.to)}</span> completes <b>Set ${s.set}: ${Manager.esc(s.setName)}</b>
+                                <span style="opacity:.85;">— Reward: ${Manager.esc(s.reward || '')}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : '';
+
+                const sendsHtml = sends.length ? sends.map((s, idx)=>{
+                    const k = this._sendKey(date, s);
+                    const isDone = !!this.state.done[k];
+                    const setChipStyle = `background:${s.setColor}; color:#111;`;
+                    const line = `${Manager.esc(Manager.state.accounts[s.from]?.name || s.from)} → ${Manager.esc(Manager.state.accounts[s.to]?.name || s.to)}`;
+                    const sticker = `${Manager.esc(s.sticker)} (Set ${s.set})`;
+                    return `
+                        <div class="cp-send ${isDone ? 'done':''}">
+                            <input type="checkbox" ${isDone ? 'checked disabled':''} onchange="CalendarPlanner.toggleDone('${date}', ${idx}, this.checked)">
+                            <div class="cp-send-main">
+                                <div class="cp-send-line">${line}</div>
+                                <div class="cp-send-sub">
+                                    <span class="cp-chip setname" style="${setChipStyle}">Set ${s.set}: ${Manager.esc(s.setName)}</span>
+                                    <span class="cp-chip sticker">⭐${s.stars || 1} • ${sticker}</span>
+                                    ${s.completesSet ? `<span class="cp-chip reward">🏁 Reward: ${Manager.esc(s.reward || '')}</span>` : ''}
+                                </div>
+                            </div>
+                            ${isDone ? '' : `<button class="btn-mini" onclick="CalendarPlanner.previewSend('${date}', ${idx})">Preview</button>`}
+                        </div>
+                    `;
+                }).join('') : `<div style="color:#888; font-weight:900; padding:10px;">No sends planned this day.</div>`;
+
+                const matrixHtml = this._renderMatrix(date, sends);
+
+                panel.innerHTML = `
+                    <div class="cp-daytitle">
+                        <div style="font-weight:900; font-size:16px;">📅 ${date} <span style="opacity:.7; font-size:12px;">(${doneCount}/${total})</span></div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button class="btn-mini" onclick="CalendarPlanner.renderCalendar()">Back to calendar</button>
+                            <button class="btn-mini primary" onclick="CalendarPlanner.markDayDone('${date}')">Mark day done (apply all)</button>
+                        </div>
+                    </div>
+                    ${alertHtml}
+                    <div class="cp-sends">${sendsHtml}</div>
+                    ${matrixHtml}
+                `;
+
+                panel.style.display = 'block';
+                // Scroll into view nicely
+                try { panel.scrollIntoView({behavior:'smooth', block:'start'}); } catch(e){}
+            },
+
+            _renderMatrix(date, sends) {
+                if (!sends || !sends.length) return '';
+                const senders = [...new Set(sends.map(s=>s.from))];
+                const receivers = [...new Set(sends.map(s=>s.to))];
+
+                const counts = {};
+                sends.forEach(s=>{
+                    const k = `${s.from}|${s.to}`;
+                    counts[k] = (counts[k] || 0) + 1;
+                });
+
+                const head = `<tr><th class="rowh">From \\ To</th>${receivers.map(r=>`<th>${Manager.esc(Manager.state.accounts[r]?.name || r)}</th>`).join('')}</tr>`;
+                const rows = senders.map(from=>{
+                    const tds = receivers.map(to=>{
+                        const v = counts[`${from}|${to}`] || 0;
+                        return `<td>${v ? v : '—'}</td>`;
+                    }).join('');
+                    return `<tr><td class="rowh">${Manager.esc(Manager.state.accounts[from]?.name || from)}</td>${tds}</tr>`;
+                }).join('');
+
+                return `
+                    <div class="cp-matrix">
+                        <table>
+                            <thead>${head}</thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                `;
+            },
+
+            previewSend(date, idx) {
+                const p = this.state.plan;
+                const day = (p.days || []).find(d=>d.date === date);
+                if (!day || !day.sends || !day.sends[idx]) return;
+                const s = day.sends[idx];
+
+                // quick preview toast: show donor has X and receiver has Y
+                const from = Manager.state.accounts[s.from];
+                const to = Manager.state.accounts[s.to];
+                const fv = (from?.data || {})[s.id] || 0;
+                const tv = (to?.data || {})[s.id] || 0;
+                Notify.show(`${from?.name || s.from} has ${fv} • ${to?.name || s.to} has ${tv} • Sending: ${s.sticker}`, 'info');
+            },
+
+            toggleDone(date, idx, checked) {
+                const p = this.state.plan;
+                const day = (p.days || []).find(d=>d.date === date);
+                if (!day || !day.sends || !day.sends[idx]) return;
+                const s = day.sends[idx];
+                const key = this._sendKey(date, s);
+
+                if (checked) {
+                    const allowSacrifice = !!document.getElementById('cp-allow-sacrifice')?.checked;
+                    const ok = Manager.applyTransfer(s.from, s.to, s.id, { allowSacrifice });
+                    if (!ok) {
+                        // revert UI checkbox
+                        this.openDay(date);
+                        return;
+                    }
+                    this.state.done[key] = true;
+                    this.save();
+                    this.renderSummary();
+                    this.renderCalendar();
+                    this.openDay(date);
+                    this._maybeCelebrate();
+                }
+            },
+
+            markDayDone(date) {
+                const p = this.state.plan;
+                const day = (p.days || []).find(d=>d.date === date);
+                if (!day) return;
+
+                const allowSacrifice = !!document.getElementById('cp-allow-sacrifice')?.checked;
+                let applied = 0;
+
+                for (let s of (day.sends||[])) {
+                    const k = this._sendKey(date, s);
+                    if (this.state.done[k]) continue;
+                    const ok = Manager.applyTransfer(s.from, s.to, s.id, { allowSacrifice });
+                    if (!ok) continue;
+                    this.state.done[k] = true;
+                    applied++;
+                }
+
+                this.save();
+                this.renderSummary();
+                this.renderCalendar();
+                this.openDay(date);
+
+                if (applied) Notify.show(`Applied ${applied} send(s) for ${date}.`, 'success');
+                this._maybeCelebrate();
+            },
+
+            _maybeCelebrate() {
+                const remaining = this.countRemaining();
+                if (remaining === 0) {
+                    Notify.show('All planned sends complete! 🥳', 'success');
+                    this.celebrate();
+                }
+            },
+
+            celebrate() {
+                const sounds = !!document.getElementById('cp-sounds')?.checked;
+                const overlay = document.getElementById('cp-celebrate');
+                if (!overlay) return;
+
+                overlay.innerHTML = '';
+                overlay.style.display = 'block';
+
+                const colors = ['#ff4081','#ffd54f','#7df9ff','#86BCEB','#BCE48D','#F1B3B8','#9FE2D6','#F0B28E'];
+                const pieces = 140;
+
+                for (let i=0;i<pieces;i++){
+                    const d = document.createElement('div');
+                    d.className = 'cp-confetti';
+                    const x = Math.random() * 100;
+                    const delay = Math.random() * 0.4;
+                    d.style.left = x + 'vw';
+                    d.style.top = '-20px';
+                    d.style.background = colors[i % colors.length];
+                    d.style.animationDelay = delay + 's';
+                    d.style.transform = `translateY(-20px) rotate(${Math.random()*360}deg)`;
+                    overlay.appendChild(d);
+                }
+
+                if (sounds) {
+                    try { this._playCheer(); } catch(e){}
+                }
+
+                setTimeout(()=>{ overlay.style.display = 'none'; overlay.innerHTML=''; }, 1800);
+            },
+
+            _playCheer() {
+                // Tiny WebAudio "ta-da" without external files
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const now = ctx.currentTime;
+
+                const beep = (freq, t, dur, type='sine', gain=0.05) => {
+                    const o = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    o.type = type;
+                    o.frequency.setValueAtTime(freq, t);
+                    g.gain.setValueAtTime(gain, t);
+                    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+                    o.connect(g); g.connect(ctx.destination);
+                    o.start(t); o.stop(t + dur);
+                };
+
+                // Simple major arpeggio
+                beep(523.25, now, 0.20, 'triangle', 0.06);   // C5
+                beep(659.25, now+0.12, 0.22, 'triangle', 0.06); // E5
+                beep(783.99, now+0.24, 0.25, 'triangle', 0.06); // G5
+                beep(1046.5, now+0.36, 0.30, 'triangle', 0.06); // C6
+            }
+        };
+
+
 document.addEventListener('DOMContentLoaded', () => {
             Manager.init();
+            try { if (typeof CalendarPlanner !== 'undefined') { CalendarPlanner.ensureInit(); CalendarPlanner.updateNotify(); } } catch(e) {}
             try { document.body.classList.toggle('album-compare', (function(){ const v = document.getElementById('view-album'); return v && v.classList.contains('active'); })()); } catch(e) {}
             if (typeof Showroom !== 'undefined') {
                 Showroom.init();
